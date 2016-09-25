@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<meta charset='utf-8'/>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Montserrat|Poppins" rel="stylesheet">
+	<link rel='stylesheet' href='css/style.css' type='text/css'>
+	<title>UI Transitions with Distance Fields</title>
+
+</head>
+<body>
+
+	<header class='space-bottom'>
+	<div class='title'>
+		<h1>UI Transitions with Distance Fields</h1>
+		<p class='date'>25th September 2016</p>
+	</div>
+	</header>
+
+	<article>
+
+		<p>As a designer I try to keep an eye out for interesting UI details when watching films or <a href='https://youtu.be/tkuSSEHc3gU?t=57'>playing games</a>. I thought it would be interesting to recreate some of these in WebGL to see what I could learn.</p>
+
+		<p>The menu transitions in the above clip revolve around images becoming visible in a series of diagonal slices that increase in width over time. <a href='https://en.wikipedia.org/wiki/Signed_distance_function'>Signed distance fields</a> (a set of values indicating the distance to a feature) seemed like they might do the trick. WebGL can store these as textures maps.</p>
+
+		<img src='img/distance_field.png' width='750px' height='482px' alt='Example of a signed distance field texture' class='space-bottom'>
+
+		<p>There are lots of ways to generate a distance field. One method is to use Photoshop layer effects. You can download the <a href='sdf-layer-styles.zip'>Photoshop file</a> I'll be using.</p>
+
+		<img src='img/outer_glow.png' width='512px' height='512px' alt='Photoshop outer glow layer effect settings' class='space-bottom'>
+
+		<p>Applying the styles to a group of rectangles gives us...</p>
+
+		<img class='js-bars-vertical space-bottom' src='img/bars_vertical.png'>
+
+		<p>Bringing this into WebGL we can use the following fragment shader to draw our shapes. We sample the texture and depending on the value draw either an opaque or transparent pixel.</p>
+
+		<pre class='space-bottom'>
+		<code class='language-glsl'>
+uniform sampler2D sdf;
+varying vec2 _uv;
+
+void main() 
+{
+    vec4 col = vec4(0.47,0.7,1,1);
+    
+    float sd = texture2D(sdf, _uv).r;
+    float a = 0.0;
+    if(sd > 0.2) a = 1.0;
+
+    gl_FragColor = vec4(col.rgb, a);
+}</code>
+		</pre>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>In order to animate the effect we supply a uniform variable <strong>t</strong> that changes from 0 to 1 over time. Comparing the pixel's position from the left edge and subtracting from the signed distance gives a cascade effect.</p>
+
+		<pre class='space-bottom'>
+		<code class='language-glsl'>
+uniform sampler2D sdf;
+uniform float t;
+
+varying vec2 _uv;
+
+void main() 
+{
+    vec4 col = vec4(0.47,0.7,1,1);
+
+    float ld = gl_FragCoord.x / 512.0;
+    float sd = texture2D(sdf, _uv).r;
+    float cascade = (t - sd) - ld;
+
+    float a = 0.0;
+    if(cascade > 0.0) a = 1.0;
+
+    gl_FragColor = vec4(col.rgb, a);
+}</code>
+		</pre>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>How do we make the slices diagonal? We start off by rotating the distance field texture. I also added more bars and varied their width a little.</p>
+
+		<img class='js-bars-diagonal space-bottom' width='512px' height='512px' alt='Diagonal bars distance field texture' src='img/bars_diagonal.png'>
+
+		<p>We also need to create a second distance field which covers the whole area diagonally. This lets us  calculate the perpendicular distance of each pixel from the top left corner of the rectangle.</p>
+
+		<img class='js-gradient space-bottom' width='512px' height='512px' alt='A diagonal black and white gradient' src='img/gradient.png'>
+
+		<p>Adding these to our shader give us diagonal bars.</p>
+
+		<pre class='space-bottom'>
+		<code class='language-glsl'>
+uniform sampler2D sdf;
+uniform sampler2D gradient;
+uniform float t;
+
+varying vec2 _uv;
+
+void main() 
+{
+    vec4 col = vec4(0.47,0.7,1,1);
+
+    float ld = texture2D(gradient, _uv).r;
+    float sd = texture2D(sdf, _uv).r;
+    float cascade = (t - sd) - ld;
+
+    float a = 0.0;
+    if(cascade > 0.0) a = 1.0;
+
+    gl_FragColor = vec4(col.rgb, a);
+}</code>
+		</pre>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>The animation looks a little rigid. Lets add some easing to the t variable before passing it to the shader.</p>
+
+		<pre class='space-bottom'>
+		<code class='language-javascript'>
+function ease(t) 
+{ 
+    if(t < 0.5) return 4*t*t*t;  
+    return (t-1)*(2*t-2)*(2*t-2)+1;
+}</code>
+		</pre>
+
+		<p>We can also smooth out the diagonal edges with the GLSL <strong>smoothstep</strong> function.</p>
+
+		<svg class='smoothing-graph space-bottom' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 400">
+			<path fill="none" stroke="#333" stroke-miterlimit="10" opacity=".1" style="isolation:isolate" d="M45.02 360V20M89.08 360V20M133.14 360V20M177.21 360V20M221.27 360V20M265.33 360V20M309.39 360V20M353.45 360V20M397.51 360V20M441.57 360V20M485.63 360V20M529.69 360V20M573.76 360V20M617.82 360V20M661.88 360V20M705.94 360V20"/>
+			<path fill="none" d="M0 0h750v400H0z"/>
+			<path fill="none" stroke="#333" stroke-miterlimit="10" opacity=".1" style="isolation:isolate" d="M.96 360V20M750 360V20"/>
+
+			<path fill="none" stroke="#ddd" stroke-miterlimit="10" stroke-width="4" d="M.75 302.92h352.7V77.08H750" opacity='0.5'/>
+			<path d="M.75 302.92h242.09c109.06 0 109.85-225.84 219.68-225.84h286.14" fill="none" stroke="#333" stroke-miterlimit="10" stroke-width="4" opacity='0.5'/>
+
+			<path class='hard-step' fill="none" stroke="#b2c6f8" stroke-miterlimit="10" stroke-width="4" d="M.75 302.92h352.7V77.08H750"/>
+			<path class='smooth-step' d="M.75 302.92h242.09c109.06 0 109.85-225.84 219.68-225.84h286.14" fill="none" stroke="#184bcf" stroke-miterlimit="10" stroke-width="4"/>
+			<path d="M748 22v336H2V22h746m2-2H0v340h750V20z" fill="#333"/>
+		</svg>
+
+		<pre class='space-bottom'>
+		<code class='language-glsl'>
+uniform sampler2D sdf;
+uniform sampler2D gradient;
+uniform float t;
+
+varying vec2 _uv;
+
+void main() 
+{
+    vec4 col = vec4(0.47,0.7,1,1);
+
+    float ld = texture2D(gradient, _uv).r;
+    float sd = texture2D(sdf, _uv).r;
+    float cascade = (t - sd) - ld;
+
+    float threshold = -0.005;
+    float a = smoothstep(threshold, -threshold, cascade);
+
+    gl_FragColor = vec4(col.rgb, a);
+}</code>
+		</pre>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>Much better. Of course instead of a single colour we can use an image texture.</p>
+
+		<img class='js-picture space-bottom' width='750px' height='480px' alt='A cat wearing glasses' src='img/picture.jpg' style='display: none'>
+
+		<pre class='space-bottom'>
+		<code class='language-glsl'>
+uniform sampler2D sdf;
+uniform sampler2D gradient;
+uniform sampler2D picture;
+uniform float t;
+
+varying vec2 _uv;
+
+void main() 
+{
+    vec4 col = texture2D(picture, _uv);
+
+    float ld = texture2D(gradient, _uv).r;
+    float sd = texture2D(sdf, _uv).r;
+    float cascade = (t - sd) - ld;
+
+    float threshold = -0.005;
+    float a = smoothstep(threshold, -threshold, cascade);
+
+    gl_FragColor = vec4(col.rgb, a);
+}</code>
+		</pre>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>By altering the linear gradient we can change which part of the shape appears first.</p>
+
+		<img class='js-gradient-middle space-bottom' width='512px' height='512px' alt='A diagonal black and white gradient that fades from the center to the edges' src='img/gradient_middle.png'>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>Then it's just a case of combining the effects in the way you want.</p>
+
+		<img class='js-jump' width='512px' height='512px' src='img/jump.png' style='display:none'>
+
+		<div class='canvas-container space-bottom'>
+			<svg class='placeholder' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+				<polygon points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" opacity="0.1" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<polygon class='arrow' points="102.34 70 49.67 100.41 49.67 39.59 102.34 70" fill="none" stroke="#fff" stroke-width='2' stroke-miterlimit="10"/>
+				<circle cx="70" cy="70" r="70" fill="#fff" opacity="0.05"/>
+			</svg>
+		</div>
+
+		<p>And that's it! Thanks for reading and if you've got any comments or questions <a href='mailto:gareth.battensby@gmail.com'>let me know</a>.</p>
+
+	</article>
+	<footer></footer>
+
+	<script src='js/prism.js'></script>
+	<script src='js/webgl.js'></script>
+	<script src='js/app.js'></script>
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+.namespace {
+  opacity: .7; }
+
+.token.boolean,
+.token.number {
+  color: black;
+  font-weight: 600; }
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #4d4bcc; }
+
+.token.atrule,
+.token.attr-value,
+.token.function {
+  color: black;
+  font-weight: 600; }
+
+.token.keyword,
+.token.class-name {
+  color: black; }
+
+.token.important,
+.token.bold {
+  font-weight: bold; }
+
+.token.italic {
+  font-style: italic; }
+
+.token.entity {
+  cursor: help; }
+
+* {
+  margin: 0;
+  padding: 0; }
+
+.space-bottom {
+  margin-bottom: 50px; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.125em;
+  color: #333;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased; }
+
+header {
+  background: #184bcf;
+  width: 100%; }
+
+article, .title {
+  max-width: 750px;
+  padding-left: 90px;
+  padding-right: 90px;
+  margin-left: auto;
+  margin-right: auto; }
+
+h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.6em;
+  line-height: 1;
+  padding-top: 70px;
+  padding-bottom: 10px;
+  color: white; }
+
+p {
+  padding-bottom: 50px; }
+
+strong {
+  font-family: monospace; }
+
+a {
+  text-decoration: underline;
+  color: #333;
+  cursor: pointer; }
+  a:hover {
+    color: #184bcf; }
+
+pre {
+  background: #f1f1f1;
+  padding-left: 50px;
+  padding-right: 50px;
+  padding-top: 30px;
+  padding-bottom: 30px; }
+
+code {
+  white-space: pre-wrap;
+  word-spacing: normal;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  hyphens: none;
+  color: #393939; }
+
+img {
+  width: 100%;
+  height: auto; }
+
+footer {
+  width: 100%;
+  height: 100px; }
+
+.date {
+  color: #9bc5ff;
+  font-size: 18px;
+  padding-bottom: 120px; }
+
+.canvas-container {
+  width: 100%;
+  height: 480px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: #23242b;
+  transition: background 0.3s cubic-bezier(0.49, 0.08, 0.47, 0.98); }
+  .canvas-container .placeholder {
+    visibility: visible;
+    width: 140px;
+    height: 140px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    pointer-events: none; }
+  .canvas-container .arrow {
+    stroke-dashoffset: 300;
+    stroke-dasharray: 300;
+    transition: stroke-dashoffset 0.4s ease-out; }
+  .canvas-container .border {
+    stroke-dasharray: 440;
+    stroke-dashoffset: -440;
+    opacity: 0.5;
+    transition: stroke-dashoffset 0.2s ease-out; }
+  .canvas-container.active .placeholder {
+    visibility: hidden; }
+  .canvas-container:hover {
+    background: #0e0f13; }
+    .canvas-container:hover .arrow {
+      stroke-dashoffset: 0; }
+    .canvas-container:hover .border {
+      stroke-dashoffset: 0; }
+
+.smoothing-graph {
+  cursor: pointer; }
+  .smoothing-graph .hard-step {
+    stroke-dashoffset: 1200;
+    stroke-dasharray: 1200;
+    transition: stroke-dashoffset 1.3s ease-out; }
+  .smoothing-graph .smooth-step {
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    transition: stroke-dashoffset 1.3s ease-out; }
+  .smoothing-graph:hover .hard-step {
+    stroke-dashoffset: 0; }
+  .smoothing-graph:hover .smooth-step {
+    stroke-dashoffset: 0; }
+
+.webgl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; }
+  .webgl.hidden {
+    display: none; }
+
+@media (max-device-width: 780px) {
+  header {
+    margin-bottom: 10px; }
+
+  article, .title {
+    width: 100%;
+    padding-left: 0px;
+    padding-right: 0px; }
+
+  h1 {
+    font-size: 2.4em;
+    letter-spacing: -2px;
+    padding-top: 40px;
+    padding-left: 18px;
+    padding-right: 18px; }
+
+  p {
+    font-size: 17px;
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: 30px;
+    line-height: 1.6; }
+
+  /*
+  a
+  {
+  	color: #184bcf;
+  }
+  */
+  img {
+    padding-left: 18px;
+    padding-right: 18px;
+    width: calc(100% - 36px); }
+
+  .date {
+    font-size: 15px;
+    margin-bottom: 60px; }
+
+  .space-bottom {
+    margin-bottom: 30px; }
+
+  .canvas-container {
+    width: calc(100% - 36px);
+    max-height: 300px;
+    margin-left: auto;
+    margin-right: auto; }
+    .canvas-container .placeholder {
+      width: 80px;
+      height: 80px; }
+    .canvas-container .arrow {
+      stroke-dashoffset: 0; }
+
+  .smoothing-graph {
+    padding-left: 18px;
+    padding-right: 18px;
+    width: calc(100% - 36px); }
+
+  pre {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    line-height: 1.4; } }
+
+/*# sourceMappingURL=style.css.map */
