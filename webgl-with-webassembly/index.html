@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang=eng>
+<head>
+<meta charset='utf-8'/>
+<meta name='viewport' content='width=device-width, minimum-scale=1.0'>
+<link rel='stylesheet' href='light.css' type='text/css'>
+<script src='highlight.js'></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<title>WebGL with WebAssembly</title>
+</head>
+<body>
+<header>
+	<canvas></canvas>
+	<div class='title'>
+		<h1>WebGL with WebAssembly</h1>
+		<p class='date'>Part 1 - 20th April 2017</p>
+	</div>
+</header>
+<article>
+
+<p>Firefox, Chrome and Edge have all added support for <a href="http://webassembly.org/">WebAssembly</a> in recent months. I decided take a look at how easy it is to write a minimal WebGL app in C++ without hefty libraries. Part one will just be getting things set up, part two will go into drawing something like the header image above.</p>
+
+<p>Don't worry if you've not used C++ before, we won't be doing anything too crazy. In fact if you have coded a WebGL app in JS a lot of this will look familiar.</p>
+
+<h2>Motivations</h2>
+
+<p>For those of you that don't know WebAssembly allows us to take C++ code and compile it for the web. What would posses you to do that? Well WebAssembly intends to output faster loading and faster running code than JavaScript currently allows. No garbage collector promises smoother, more consistent frames rates and a great deal of existing graphics code is written in C++;</p>
+
+<p>There are more 'day to day' reasons too. WebGL programming generally involves two things, lots of vector math and filling buffers with vector math to send to the graphics card.</p>
+
+<p>Here's an example. Say you want to animate an object in physics-y sort of way. In JS that might look like this.</p>
+
+<pre><code>// temp vec3 so we don't allocate memory
+var accel = vec3_temp();
+vec3_scale(accel, obj.accel, dt);
+vec3_add(obj.vel, accel, obj.vel);
+vec3_add(obj.pos, obj.vel, obj.pos);
+</code></pre>
+
+<p>In C++ that becomes a one liner and we don't have to worry about creating garbage collected memory as the intermediate values are put on the stack.</p>
+
+<pre><code>obj.pos += obj.vel + obj.accel * dt;
+</code></pre>
+
+<p>You might then want to take the position and velocity of your objects and send them to the GPU using fixed typed arrays.</p>
+
+<pre><code>var stride = 6;
+var count = 32;
+var size = stride * count;
+var buffer = new Float32Array(size);
+for(var i = 0; i &lt; size; i += stride)
+{
+    var obj = objects[i];
+    buffer[i  ] = obj.pos[0];
+    buffer[i+1] = obj.pos[1];
+    buffer[i+2] = obj.pos[2];
+    buffer[i+3] = obj.vel[0];
+    buffer[i+4] = obj.vel[1];
+    buffer[i+5] = obj.vel[2];
+}
+</code></pre>
+
+<p>In C++ you can view memory as different types through casting which makes this sort of thing a little easier.</p>
+
+<pre><code>struct Vertex
+{
+    Vec3 position;
+    Vec4 color;
+};
+
+auto count = 32;
+auto buffer = alloc_array(Vertex, count);
+for(auto i = 0; i &lt; count; i++)
+{
+    auto obj = objects[i];
+    *buffer = {obj.pos, obj.vel};
+    buffer++;
+}
+</code></pre>
+
+<p>Now it should be said that C++ has its fair share of problems but in general I feel it's better suited to this kind of work. The cool thing is we now have a choice and that's worth exploring. With all that said let's look at how to get this going.</p>
+
+<h2>Tooling Up</h2>
+
+<p>The tool chain will be made up of a few elements. Emscripten (a C++ to WebAssembly compiler), a shell script to manage build settings and some JavaScript to tie everything together. </p>
+
+<h3>Compiler</h3>
+
+<p>Head over to <a href="http://webassembly.org/getting-started/developers-guide/">WebAssembly.org</a> and find the instructions for building Emscripten on your OS.</p>
+
+<p>Two things to note here. First the build process for me took around an hour, seemingly downloading the entire Internet in the process. Secondly, I've done this on separate Mac, Linux and Windows machines and each time the <a href="https://xkcd.com/1742/">build failed</a>. If this happens my solution was to retry the last command. The build step will pick up where it left off and progress a little further each time. You might need several attempts. Extremely annoying but we only need to complete this once. In time this should end up as simple as downloading a binary - instead of having to compile everything ourselves. Like savages.</p>
+
+<h3>Build Script</h3>
+
+<p>A build script will help us manage compiler settings and later on package assets (the same way Gulp or WebPack would). We'll stick to a simple shell script for now.</p>
+
+<pre><code>#!/bin/bash
+
+# Adds emsdk tools to PATH
+source /path_to_emscripten/emsdk/emsdk_env.sh
+
+INPUT=src/main.cpp
+OPTIMISATIONS=-O3
+MEMORY=32*1024*1024
+
+if emcc $INPUT 
+        $OPTIMISATIONS
+        -o build/app_wasm.js
+        -s TOTAL_MEMORY=$MEMORY
+        -s WASM=1
+        --std=c++11 then;
+
+echo "AWWW YEAH!";
+
+#If WASM compiled ok generate fallback ASM code
+emcc $INPUT 
+     $OPTIMISATIONS
+     -o build/app_fallback.js
+     -s TOTAL_MEMORY=$MEMORY
+     -s WASM=0
+     --std=c++11
+
+#reload browser tab or whatever
+
+else
+echo "HALP!";
+fi
+</code></pre>
+
+<p>Here's what the various build options mean.</p>
+
+<p><code>INPUT</code> is the file that contains your code's main function.</p>
+
+<p><code>-o</code> is where the compiled result will go. Notice the extension is .js. Required as some js code is needed to initialise WebAssembly. </p>
+
+<p><code>-s WASM</code> tells Emscripten to output WebAssembly if set to =1. The wasm file will be placed along-side the js file in the build directory.  When set to 0 Emscripten will output asm.js code (a precursor to WebAssembly). Useful for supporting older browsers.</p>
+
+<p><code>OPTIMISATIONS</code> indicates how aggressively to optimise the code (0 = no optimizations 3 = full). More optimization can increase compile times but shouldn't be noticeable for the amount of code we will be writing.</p>
+
+<p><code>MEMORY</code> the total memory in bytes that will be assigned to your application. You can leave that off at first but it's useful to know. Has to be set to at least 16MB.</p>
+
+<p><code>--std=c++11</code> allows use of C++11 features like <code>auto</code> and initializer lists which will help make our code more readable. </p>
+
+<p>Note that this isn't an exhaustive list. Check the <a href="http://webassembly.org/docs/faq/">WebAssembly FAQ</a> for more details.</p>
+
+<h3>Hello from WebAssembly!</h3>
+
+<p>There are a few pieces we need to test our tool chain is setup correctly. First is a main.cpp file containing a main function.</p>
+
+<pre><code>#include &lt;stdio.h&gt;
+
+int main(int argc, char** argv) 
+{
+    printf("Hello from WebAssembly!\n");
+    return 1;
+}
+</code></pre>
+
+<p>Next, a basic html file to hold everything.</p>
+
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset='utf-8'/&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;canvas&gt;&lt;/canvas&gt;
+    &lt;script src='wasm_loader.js'&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>The canvas element you may have guessed is for WebGL. Notice the <code>wasm_loader.js</code> file that's being included. Here's what that looks like.</p>
+
+<pre><code>var Module = {};
+
+function start_app()
+{
+    var canvas = document.querySelector('canvas');
+    canvas.width = 800;
+    canvas.height = 600;   
+    Module.canvas = canvas;
+
+    //check for WebAssembly support otherwise
+    //fallback to using asm.js
+    if(window.WebAssembly !== undefined)
+    {
+        var r = new XMLHttpRequest();
+        r.open('GET', 'app.wasm', true);
+        r.responseType = 'arraybuffer';
+        r.onload = function() 
+        {
+            Module.wasmBinary = r.response;
+            var script = document.createElement('script');
+            script.src = 'app_wasm.js';
+            document.body.appendChild(script);
+        };
+        r.send();
+    }
+    else
+    {
+        var script = document.createElement('script');
+        script.src = 'app_fallback.js';
+        document.body.appendChild(script);
+    }
+}
+
+start_app();
+</code></pre>
+
+<p>The <code>Module</code> object at the top of the file holds all the WebAssembly related stuff. A request loads the WASM file and assigns it to the Module. Then we load <code>app.js</code> which you will remember gets output from the Emscripten compiler. This contains all the setup for initialising memory and starts our WebAssembly code running. Bindings for various JS apis end up here too.</p>
+
+<p>In order for the request to work we'll need to serve the html page from a webserver. If you're not sure what that is take a look at <a href="http://2ality.com/2014/06/simple-http-server.html">Python's SimpleServer</a>.</p>
+
+<p>Run your build script from the command line and if it compiles without errors navigate to your page in a browser. All being well you'll see <code>'Hello from Webassembly!'</code> logged to the console. Make sure you are using the latest version of Chrome, Firefox or Edge if not.</p>
+
+<h2>Enter WebGL</h2>
+
+<p>Ok, let's get to the good stuff. A lot of the Emscripten examples use SDL for this bit but it's pretty straightforward without it which will also save some file size. Start by including the following headers.</p>
+
+<pre><code>#include &lt;GLES2/gl2.h&gt;
+#include &lt;empscripten&gt;
+#include "html5.h"
+</code></pre>
+
+<p>gl2.h is the header file for OpenGLES2 (embedded systems) which is what WebGL is based on. Emscripten will know to translate the function in here to WebGL calls. "html5.h" is a file that comes with Emscripten that contains, amongst other things, functions for getting the WebGL context. I found it easiest just to copy it into my source directory and include it that way.</p>
+
+<p>If you've created a WebGL context in JS before the below snippet should look familiar.</p>
+
+<pre><code>int main(int argc, char** argv) 
+{
+    EmscriptenWebGLContextAttributes attrs;
+    attrs.alpha = false;
+    attrs.depth = true;
+    attrs.stencil = true;
+    attrs.antialias = true;
+    attrs.premultipliedAlpha = false;
+    attrs.preserveDrawingBuffer = false;
+    attrs.preferLowPowerToHighPerformance = false;
+    attrs.failIfMajorPerformanceCaveat = false;
+    attrs.majorVersion = 1;
+    attrs.minorVersion = 0;
+    attrs.enableExtensionsByDefault = false;
+
+    int ctx = emscripten_webgl_create_context(0, &amp;attrs);
+    if(!ctx)
+    {
+        printf("Webgl ctx could not be created!\n");
+        return -1;
+    }    
+
+    emscripten_webgl_make_context_current(ctx);
+    glClearColor(0,0,1,1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    return 1;
+}
+</code></pre>
+
+<p>Recompile and reload your page, hopefully you see an 800x600 blue square on your screen rendered by WebGL - what a time to be alive!</p>
+
+<h3>Extensions</h3>
+
+<p>Sooner or later you'll need to load a WebGL extension. To do that include the gl2ext header (don't forget the <code>#define GL_GLEXT_PROTOTYPES</code> as well). </p>
+
+<pre><code>#include &lt;GLES2/gl2.h&gt;
+#define GL_GLEXT_PROTOTYPES
+#include &lt;GLES2/gl2ext.h&gt;
+</code></pre>
+
+<p>You then have a couple of options. Either set <code>attrs.enableExtensionsByDefault = true</code> to have Emscripten enable all available extensions or <code>emscripten_webgl_enable_extension(ctx, name)</code> and just enable the ones you want.</p>
+
+<h2>Asset Loading</h2>
+
+<p>To do anything more interesting than a blue background we'll need assets like shaders and images and that means loading external files. </p>
+
+<p>I use a Python script that walks through an asset directory and bundles everything into a single binary file. Then it's just a case of running it during the build process. I won't into too much detail on how it works in this part but here's the gist.</p>
+
+<pre><code>def compile_assets(dir, write_path):
+    writer = FileWriter(write_path)
+
+    for root, directories, files in os.walk(dir):
+        for f in files:
+            split = f.split(".")
+            name = split[0]
+            ext = split[1]
+            path = os.path.join(root, f)
+
+            if ext == 'glsl': writer.glsl(name, path)
+            elif ext == 'png': writer.png(name, path)
+            #etc
+
+    writer.i32(ASSET_TYPE_END)
+    writer.close()
+</code></pre>
+
+<p>To load files on the C++ side we'll use another Emscripten function <code>emscripten_async_wget_data</code>. This is similar to an AJAX request in JS and triggers a callback on completion. </p>
+
+<pre><code>static void
+read_asset_file(void* arg, void* buffer, int size)
+{
+    auto assets = (Asset*)arg;
+    //read assets from the buffer into
+    //the struct we've passed along
+}
+
+static void
+load_asset_file(Assets* assets, const char* url)
+{
+    emscripten_async_wget_data(url, 
+        assets, read_asset_file, on_asset_load_error);
+}
+</code></pre>
+
+<p>By bundling all out assets into one file we only need a single async load call which is easy to manage for our simple app. </p>
+
+<h3>Update loop</h3>
+
+<p>Interactive applications need some sort of update and render loop. <code>emscripten_set_main_loop</code>
+does just that. Setting the second (fps) parameter to 0 causes Emscripten to use <code>requestAnimationFrame</code> under the hood which aims to match the refresh rate of your display.</p>
+
+<pre><code>static void update()
+{
+    auto t = emscripten_get_now();
+    glClear(GL_COLOR_BUFFER_BIT);
+    //move stuff
+    //draw stuff
+}
+
+int main(int argc, char** argv) 
+{
+    //setup WebGL etc
+    emscripten_set_main_loop(update, 0, 0);
+}
+</code></pre>
+
+<h2>Part Two</h2>
+
+<p>These are just the building blocks to get started. In part two we'll go into more detail and actually start drawing something. Thanks for reading and if you have any questions or comments <a href="mailto:gareth@parall.ax">let me know</a>.</p>
+</article>
+</body>
+<script src='wasm_loader.js'></script>
+</html>
