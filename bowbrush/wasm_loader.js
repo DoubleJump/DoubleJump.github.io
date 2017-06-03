@@ -12,15 +12,15 @@ function init()
 	
 	Module.canvas = canvas;
 
-	if(WebAssembly !== undefined)
-	{
-		request_wasm_file('app_wasm.wasm', Module);
-	}
-	else
+	if(window['WebAssembly'] === undefined)
 	{
 		var script = document.createElement('script');
 		script.src = "app_asm.js";
 		document.body.appendChild(script);
+	}
+	else
+	{
+		request_wasm_file('app_wasm.wasm', Module);
 	}
 }
 
