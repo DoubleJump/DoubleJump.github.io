@@ -1,0 +1,18 @@
+.animation-frame
+{
+	width:800px;
+	height:600px;
+	position: relative;
+}
+
+.animation
+{
+	position: absolute;
+	width: 800px;
+	height:600px;
+	/*
+	left: 50%;
+	top: 50%;
+	transform:translate(-50%,-50%);
+	*/
+}
