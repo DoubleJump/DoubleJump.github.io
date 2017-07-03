@@ -111,8 +111,8 @@ function build_timelines()
 	for(var i = 0; i < E.rain_paths.length; ++i)
 	{
 		var path = E.rain_paths[i];
-		//var length = path.getTotalLength();
-		var length = 200;
+		var length = path.getTotalLength();
+		//var length = 200;
 		tl_rain_paths.fromTo(E.rain_paths[i], 1.5, 
 			{strokeDashoffset:  0},
 			{strokeDashoffset:-length, ease:linear}, 0.0);
@@ -125,9 +125,16 @@ function build_timelines()
 
 function init()
 {
+	var svg = document.querySelector('svg');
+	svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+	svg.setAttribute('width', '100%');
+	svg.setAttribute('height', '100%');
+
+
 	build_timelines();
-	window.addEventListener('click', on_click);
-	window.addEventListener('keydown', on_key_down);
+	svg.addEventListener('click', on_click);
+	svg.addEventListener('press', on_click);
+	//window.addEventListener('keydown', on_key_down);
 }
 function on_key_down()
 {
@@ -150,4 +157,4 @@ function on_click()
 	}
 }
 
-window.addEventListener('load', init);
+init()
