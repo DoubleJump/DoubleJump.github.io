@@ -5,6 +5,7 @@ var easeback = Back.easeOut.config(1.7);
 var linear = Power0.easeOut;
 
 var tl_cloud_switch;
+var tl_cloud_hover;
 var tl_rain_paths;
 var raining = false;
 
@@ -65,6 +66,7 @@ function build_timelines()
 	log(E)
 	
 	center_origin(E.cloud);
+	center_origin(E.cloud_root);
 	center_origin(E.cloud_shadow);
 	TW.set(E.brolly_top, {transformOrigin:"50% 0%"});
 
@@ -106,18 +108,23 @@ function build_timelines()
 	tl_cloud_switch.to(E.wall_top, 0.5, {fill:"rgb(117 135 150)"}, 0.0);
 
 
-
 	tl_rain_paths = new TimelineMax({repeat:-1});
 	for(var i = 0; i < E.rain_paths.length; ++i)
 	{
 		var path = E.rain_paths[i];
 		var length = path.getTotalLength();
-		//var length = 200;
-		tl_rain_paths.fromTo(E.rain_paths[i], 1.5, 
+		var length = 200;
+		var duration = 300;
+		tl_rain_paths.fromTo(E.rain_paths[i], (duration / length), 
 			{strokeDashoffset:  0},
 			{strokeDashoffset:-length, ease:linear}, 0.0);
 	}
 	
+
+	tl_cloud_hover = new TimelineMax({paused: false, repeat:-1});
+	tl_cloud_hover.to(E.cloud_root, 1.0, {x:-20, rotation:-5, ease:linear}, 0.0);
+	tl_cloud_hover.to(E.cloud_root, 2.0, {x: 20, rotation: 5, ease:linear}, 1.0);
+	tl_cloud_hover.to(E.cloud_root, 1.0, {x:  0, rotation: 0, ease:linear}, 3.0);
 
 	//return tl;
 }
@@ -129,17 +136,10 @@ function init()
 	svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
 	svg.setAttribute('width', '100%');
 	svg.setAttribute('height', '100%');
-
-
-	build_timelines();
 	svg.addEventListener('click', on_click);
 	svg.addEventListener('press', on_click);
-	//window.addEventListener('keydown', on_key_down);
-}
-function on_key_down()
-{
-	tl_cloud_switch.stop();
-	tl_rain_paths.stop();
+
+	build_timelines();
 }
 
 function on_click()
@@ -149,11 +149,13 @@ function on_click()
 	{
 		tl_cloud_switch.play();
 		tl_rain_paths.resume();
+		tl_cloud_hover.stop();
 	}
 	else
 	{
 		tl_cloud_switch.reverse();
 		tl_rain_paths.paused();
+		tl_cloud_hover.play();
 	}
 }
 
