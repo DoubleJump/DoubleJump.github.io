@@ -4,186 +4,21 @@
 
 	<meta charset='utf-8'/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<!-- <link rel='stylesheet' href='style.css' type='text/css'> -->
-	<style type="text/css">
-	*
-	{
-		margin: 0;
-		padding: 0;
-	}
-
-	.button
-	{
-		width: 150px;
-	    height: 60px;
-	    background: #00a3db;
-	    font-family: sans-serif;
-	    font-size: 18px;
-	    color: white;
-	    text-align: center;
-	    display: block;
-	    cursor: pointer;
-	    line-height: 52px;
-	}
-
-	.display
-	{
-		font-family: sans-serif;
-	    font-size: 18px;
-	    color: #333333;
-	}
-
-	.time-range input
-	{
-		width: 150px;
-	    margin-top: 30px;
-	    margin-bottom: 30px;
-	}
-	</style>
+	<link rel='stylesheet' href='style.css' type='text/css'>
 
 </head>
 <body>
 
-	<div class='time-range'>
+	<!-- <div class='time-range'>
 		<div class='tick-display'>60</div>
 		<input type='range' min='1' max='120' value='60' step='1'>
-	</div>
+	</div> -->
 
-	<div class='button'>Start</div>
+	<div class='state'>Idle</div>
+	<div class='button start'>Start</div>
+	<div class='button reset'>Reset</div>
 	<div class='display'></div>
-	<!-- <script src='gps.js'></script> -->
-	<script type="text/javascript">
-var locations = [];
-var current_tick;
-var last_tick;
-var TICK_RATE = 60 * 1000;
-var is_recording = false;
-
-function LocationRecord(location)
-{
-	var r = {};
-	r.latitude = location.coords.latitude;
-	r.longitude = location.coords.longitude;
-	r.accuracy = location.coords.accuracy;
-	r.timestamp = Date.now();
-	return r;
-}
-
-function find(e)
-{
-	return document.querySelector(e);	
-}
-
-function LOG(e)
-{
-	console.log(e);
-}
-
-function init()
-{
-	var record_button = find('.button');
-	record_button.addEventListener('click', function()
-	{
-		is_recording = !is_recording;
-		if(is_recording)
-		{
-			record_button.innerHTML = 'Stop';
-			start_recording();
-		}
-		else
-		{
-			record_button.innerHTML = 'Start';
-			stop_recording();
-		}
-	});
-
-	var tick_slider = find('.time-range input');
-	tick_slider.addEventListener('change', function(e)
-	{
-		TICK_RATE = e.target.value * 1000;
-		find('.tick-display').innerHTML = e.target.value;
-	});
-}
-init();
-
-function start_recording()
-{
-	if(!navigator.geolocation)
-	{
-		LOG('No location support');
-		return;
-	}
-
-	LOG('Recording...');
-	last_tick = window.performance.now();
-	record_location();
-	current_tick = 0;
-	requestAnimationFrame(update);
-}
-
-function stop_recording()
-{
-	cancelAnimationFrame(update);
-
-	LOG('Recording stopped');
-
-	//write locations to page
-	var display = document.querySelector('.display');
-	
-	var display_text = "Count: " + locations.length;
-
-	display_text += " Positions: [";
-
-	for(var i = 0; i < locations.length; ++i)
-	{
-		var l = locations[i];
-		//LOG('Latitude: ' + l.latitude + ' Longitude: ' + l.longitude + ' Time: ' + l.timestamp);
-
-		display_text += l.longitude + ', ';
-		display_text += l.latitude;
-		if(i !== locations.length-1) display_text += ', '
-	}
-
-	display_text += ']<br> Times: [';
-
-	for(var i = 0; i < locations.length; ++i)
-	{
-		var l = locations[i];
-		display_text += l.timestamp;
-		if(i !== locations.length-1) display_text += ', '
-	}
-
-	display_text += ']';
-	display.innerHTML = display_text;
-}
-
-function update(t)
-{
-	if(is_recording === false) return;
-
-	var dt = (t - last_tick);
-	current_tick += dt;
-	last_tick = t;
-
-	if(current_tick > TICK_RATE)
-	{
-		LOG('Tick: ' + current_tick);
-		record_location();
-		current_tick -= TICK_RATE;
-	}
-
-	requestAnimationFrame(update);
-}
-
-function record_location()
-{
-	navigator.geolocation.getCurrentPosition(function(location) 
-	{
-	  	var record = LocationRecord(location);
-	  	locations.push(record);
-	});
-}
-	</script>
+	<script src='gps.js'></script>
 
 </body>
 </html>
