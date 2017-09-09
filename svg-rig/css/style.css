@@ -1,0 +1,53 @@
+*
+{
+	margin: 0; padding: 0;
+}
+
+body, html
+{
+	overflow: hidden;
+	width:800px;
+	height:600px;
+}
+
+/*
+.preloader
+{
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%,-50%);
+}
+*/
+.app
+{
+	position: absolute;
+	top:0;
+	left:0;
+	width: 800px;
+	height: 600px;
+}
+.app.grab
+{
+	cursor: -webkit-grab;
+}
+
+svg
+{
+	position: absolute;
+	width: 800px;
+	height: 600px;
+}
+
+/*
+.ui
+{
+	background: black;
+    color: white;
+    padding: 15px;
+    position: absolute;
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: monospace;
+}
+*/
