@@ -6,8 +6,9 @@
 body, html
 {
 	overflow: hidden;
-	width:800px;
-	height:600px;
+	width:100%;
+	height:100%;
+	background: #3D00B8;
 }
 
 /*
@@ -24,8 +25,8 @@ body, html
 	position: absolute;
 	top:0;
 	left:0;
-	width: 800px;
-	height: 600px;
+	width: 100%;
+	height: 100%;
 }
 .app.grab
 {
@@ -35,8 +36,8 @@ body, html
 svg
 {
 	position: absolute;
-	width: 800px;
-	height: 600px;
+	width: 100%;
+	height: 100%;
 }
 
 /*
