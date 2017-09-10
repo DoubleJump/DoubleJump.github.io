@@ -5412,10 +5412,11 @@ function set_origin(el)
 
 function start()
 {
-	var main_rig = document.querySelector('.rig-main');
+	//var main_rig = document.querySelector('.rig-main');
 	var diagram_rig = document.querySelector('.rig-diagram');
 	var shadow_rig = document.querySelector('.rig-shadow');
 
+	/*
 	var E = svg_find(
     {
         arm_upper: 'arm-upper',
@@ -5424,7 +5425,7 @@ function start()
     }, main_rig, '.rig-');
     //LOG(E);
     for(var k in E) set_origin(E[k]);
-
+	*/
     var F = svg_find(
     {
         arm_upper: 'arm-upper',
@@ -5444,13 +5445,14 @@ function start()
     for(var k in G) set_origin(G[k]);
 	
     app.root = Entity(null);
-
+	/*
 	app.main_puppet = 
 	[
 		E.arm_upper,
 		E.arm_lower,
 		E.hand
 	];
+	*/
 
 	app.diagram_puppet = 
 	[
@@ -5477,28 +5479,30 @@ function start()
 
     set_clear_color([0.5,0.5,0.5,1.0]);
 
-
     var anim = app.assets.animations.wave;
     anim.target = app.assets.rigs.armature.joints;
     play_animation(anim);
+
+    app.debug_time = document.querySelector('.debug-time');
 }
 
 function update(dt)
 {
-	var mw = _Vec3();
-    get_mouse_world_position(mw, app.camera);
+	//var mw = _Vec3();
+    //get_mouse_world_position(mw, app.camera);
 
     update_entity(app.root, true);
 
     var anim = app.assets.animations.wave;
     update_animation(anim, dt);
+    app.debug_time.innerHTML = 'Time: ' + round_to(anim.t, 2);
 
     var rig = app.assets.rigs.armature;
     update_rig(rig);
 
     var pos = _Vec3();
     var euler = _Vec3();
-    for(var i = 0; i < app.main_puppet.length; ++i)
+    for(var i = 0; i < app.diagram_puppet.length; ++i)
     {
     	var joint = rig.joints[i];
     	vec_eq(pos, joint.position);
@@ -5510,10 +5514,11 @@ function update(dt)
 
     	var transform = 'translate(' + x + 'px, ' + y + 'px) rotate(' + rot + 'deg)';
 
-    	app.main_puppet[i].style.transform = transform;
+    	//app.main_puppet[i].style.transform = transform;
     	app.diagram_puppet[i].style.transform = transform;
     	app.shadow_puppet[i].style.transform = transform;
     }
+
 
  }
 
