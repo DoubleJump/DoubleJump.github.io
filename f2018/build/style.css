@@ -62,12 +62,12 @@ body, html
     line-height: 1;	
     width: fit-content;
 
-    background: rgba(0, 0, 0, 0.28);
+    /*background: rgba(0, 0, 0, 0.28);*/
     padding: 2px;
 }
 .title span
 {
-
+	color: pink;
 }
 
 .title .subtitle
@@ -87,34 +87,6 @@ body, html
 	text-decoration: underline;
     text-underline-position: under;
     cursor: pointer;
-}
-
-h1
-{
-	
-}
-h2
-{
-	font-family: 'karla';
-	font-size: 18px;
-}
-
-
-.cursor
-{
-	width: 30px;
-    height: 30px;
-    stroke-width: 2px;
-    opacity: 0.5;
-    stroke: white;
-    /*fill: white;*/
-    fill: none;
-    position: absolute;
-    transition: transform 0.3s ease-out;
-}
-.cursor.moving
-{
-	transform: scale(1.5);
 }
 
 
@@ -144,4 +116,5 @@ h2
 .menu ul
 {
 	cursor: pointer;
+	display: block;
 }

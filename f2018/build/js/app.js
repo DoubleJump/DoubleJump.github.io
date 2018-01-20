@@ -199,9 +199,16 @@ function uint8_to_base64(input)
     }
     return output;
 }
-function AssetGroup()
+function AssetGroup(name)
 {
     var r = {};
+    r.name = name;
+    r.load_count = 0;
+    r.loaded = false;
+    r.is_loading = false;
+    r.load_progress = 0;
+    r.onload = null;
+
     r.shaders = {};
     r.meshes = {};
     r.textures = {};
@@ -232,6 +239,57 @@ var AssetType =
     CUBEMAP: 14,
     SOUNDS: 15,
     END: -1
+}
+
+function load_assets(ag, urls, onload)
+{
+    LOG('Loading Asset Group: ' + ag.name);
+
+    ag.onload = onload;
+
+    for(var k in urls)
+    {
+        var url = urls[k];
+        var path = url.match(/[^\\/]+$/)[0];
+        var name = path.split(".")[0];
+        var type = path.split(".")[1];
+
+        //LOG('Loading: ' + path);
+
+        ag.load_count++;
+
+        switch(type)
+        {
+            case 'txt':
+            {
+                var rq = Request('arraybuffer', url, function(data)
+                {
+                    read_asset_file(data, ag);
+                    ag.load_count--;
+                    update_load_progress(ag);
+                });
+                break;
+            }
+            case 'png':
+            case 'jpg':
+            {
+                ag.textures[name] = load_texture_async(url, ag);
+                break;
+            }
+            default: break;
+        }
+
+    }
+}
+
+function update_load_progress(ag)
+{
+    if(ag.load_count === 0)
+    {
+        ag.loaded = true;
+        LOG('Asset Group: ' + ag.name + ' loaded');
+        if(ag.onload) ag.onload();
+    }
 }
 
 function bind_assets(assets)
@@ -2473,7 +2531,6 @@ function Texture(width, height, data, sampler, format, bytes_per_pixel)
 {
 	var t = {};
 	t.id = null;
-	//t.index = 0;
 	t.data = data;
 	t.format = format;
 	t.width = width;
@@ -2483,7 +2540,7 @@ function Texture(width, height, data, sampler, format, bytes_per_pixel)
 	t.from_element = false;
 	t.sampler = sampler;
 	t.flip = false;
-	t.loaded = false;
+	//t.loaded = true;
 	t.gl_releasable = false;
 	return t;
 }
@@ -2515,16 +2572,13 @@ function load_texture_group(base_path, urls)
 	}
 }
 
-function load_texture_async(url, sampler, format, flip)
+function load_texture_async(url, ag)
 {
-	var t = empty_texture(sampler, format);
+	var t = empty_texture();
+	//t.loaded = false;
 	t.from_element = true;
 	t.use_mipmaps = false;
-	t.flip = flip || false;
-
-	var name = url.match(/[^\\/]+$/)[0];
-	name = name.split(".")[0];
-    app.assets.textures[name] = t;
+	t.flip = true;
 
 	var img = new Image();
     img.onload = function(e)
@@ -2532,9 +2586,10 @@ function load_texture_async(url, sampler, format, flip)
     	t.width = img.width;
     	t.height = img.height;
     	t.data = img;
-    	t.loaded = true;
-    	bind_texture(t);
-    	update_texture(t);
+    	//t.loaded = true;
+
+    	ag.load_count--;
+    	update_load_progress(ag);
     }
 	img.src = url;
 	return t;
@@ -2629,6 +2684,11 @@ function standard_render_target(view)
 	r.depth = depth_texture(view[2], view[3], app.sampler);
 	r.view = view;
 	bind_render_target(r);
+	set_render_target(r);
+	set_render_target_color(r.color);
+	set_render_target_depth(r.depth);
+	verify_frame_buffer();
+	set_render_target(null);
 	return r;
 }
 var TextHorizontalAlignment = 
@@ -3121,8 +3181,8 @@ function rotate_entity(e, v)
 
 function update_entity(e, force)
 {
-	if(force === true || e.dirty === true)
-	{
+	//if(force === true || e.dirty === true)
+	//{
 		mat4_compose(e.local_matrix, e.position, e.scale, e.rotation);
 		
 		if(e.parent === null) vec_eq(e.world_matrix, e.local_matrix);
@@ -3137,7 +3197,7 @@ function update_entity(e, force)
 		}
 
 		e.dirty = false;
-	}
+	//}
 }
 function Camera(near, far, fov, view, ortho ,otho_size)
 {
@@ -3212,11 +3272,65 @@ function Canvas(container, view)
     return canvas;
 }
 
+function GLState()
+{
+	var r = {};
+
+	r.shader = null;
+	r.render_buffer = null;
+	r.frame_buffer = null;
+	r.array_buffer = null;
+	r.index_buffer = null;
+	r.texture = null;
+
+	r.blending = null;
+	r.blend_mode = null;
+	r.depth_testing = null;
+	r.depth_write = null;
+	r.depth_mode = null;
+	r.depth_min = null;
+	r.depth_max = null;
+
+	r.scissor = null;
+	r.culling = null;
+	r.winding_order = null;
+	r.line_width = null;
+	r.dither = null;
+
+	return r;
+}
+
+var DepthMode = 
+{
+	DEFAULT: 0,
+	NEVER: 1,
+	LESS: 2,
+	LESS_OR_EQUAL: 3,
+	EQUAL: 4,
+	GREATER: 5,
+	NOT_EQUAL: 6,
+	GREATER_OR_EQUAL: 7,
+	ALWAYS: 8,
+};
+
+var BlendMode = 
+{
+	DEFAULT: 0,
+	NONE: 1,
+	DARKEN: 2,
+	LIGHTEN: 3,
+	DIFFERENCE: 4,
+	MULTIPLY: 5,
+	SCREEN: 6,
+	INVERT: 7,
+};
+
+
 var GL = null;
 function WebGL(canvas, options)
 {
     GL = canvas.getContext('webgl', options) ||
-    	canvas.getContext('experimental-webgl', options);
+    	 canvas.getContext('experimental-webgl', options);
     if(!GL)
     {
     	console.error('Webgl not supported');
@@ -3235,10 +3349,15 @@ function WebGL(canvas, options)
     GL._parameters = {};
 	GL._parameters.num_texture_units = GL.getParameter(GL.MAX_TEXTURE_IMAGE_UNITS);
 
-	GL.clearColor(1.0, 1.0, 1.0, 1.0);
-	GL.enable(GL.SCISSOR_TEST);
+	GL._parameters.max_anisotropy = null;
+	var anisotropic = GL.extensions.EXT_texture_filter_anisotropic;
+	if(anisotropic !== undefined)
+	{
+		GL._parameters.max_anisotropy = GL.getParameter(anisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+	}
 
-	reset_webgl_state(GL);
+	GL._state = GLState();
+	reset_webgl_state();
 
 	// DEBUG
 	//log_webgl_info(GL);
@@ -3247,7 +3366,7 @@ function WebGL(canvas, options)
 	return GL;
 }
 
-function reset_webgl_state(GL)
+function reset_webgl_state()
 {
 	var n = GL._parameters.num_texture_units;
 	for(var i = 0; i < n; ++i) 
@@ -3256,12 +3375,14 @@ function reset_webgl_state(GL)
 		GL.bindTexture(GL.TEXTURE_2D, null);
 		GL.bindTexture(GL.TEXTURE_CUBE_MAP, null);
 	}
-	GL.bindBuffer(GL.ARRAY_BUFFER, null);
-	GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, null);
-	GL.bindRenderbuffer(GL.RENDERBUFFER, null);
-	GL.bindFramebuffer(GL.FRAMEBUFFER, null);
+
+	set_render_target(null);
 
 	enable_backface_culling();
+	enable_scissor_testing();
+	GL.cullFace(GL.BACK);
+	GL.frontFace(GL.CCW);
+
 	enable_depth_testing(GL.LEQUAL);
 	set_blend_mode(BlendMode.DEFAULT);
 }
@@ -3282,61 +3403,183 @@ function set_clear_color_f(r,g,b,a)
 	GL.clearColor(r,g,b,a);
 }
 
-function clear_screen()
+function clear_screen(mode)
 {
-	GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+	mode = mode || (GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+	GL.clear(mode);
+}
+
+function enable_dithering()
+{
+	if(GL._state.dither === true) return;
+	GL._state.dither = true;
+
+	GL.enable(GL.DITHER);
+}
+function disable_dithering()
+{
+	if(GL._state.dither === false) return;
+	GL._state.dither = false;
+	
+	GL.disable(GL.DITHER);
 }
 
 function enable_backface_culling()
 {
+	if(GL._state.culling === true) return;
+	GL._state.culling = true;
+
 	GL.enable(GL.CULL_FACE);
-	GL.cullFace(GL.BACK);
-	GL.frontFace(GL.CCW);
 }
 function disable_backface_culling()
 {
+	if(GL._state.culling === false) return;
+	GL._state.culling = false;
+	
 	GL.disable(GL.CULL_FACE);
 }
 
-function enable_depth_testing()
+function enable_depth_testing(mode)
 {
+	if(GL._state.depth_testing === true) return;
+	GL._state.depth_testing = true;
+
 	GL.enable(GL.DEPTH_TEST);
+	if(mode) GL.depthFunc(mode);
 }
 
 function disable_depth_testing()
 {
+	if(GL._state.depth_testing === false) return;
+	GL._state.depth_testing = false;
+
 	GL.disable(GL.DEPTH_TEST);
+}
+
+function enable_scissor_testing()
+{
+	if(GL._state.scissor_testing === true) return;
+	GL._state.scissor_testing = true;
+
+	GL.enable(GL.SCISSOR_TEST);
+}
+
+function disable_scissor_testing()
+{
+	if(GL._state.scissor_testing === false) return;
+	GL._state.scissor_testing = false;
+
+	GL.disable(GL.SCISSOR_TEST);
 }
 
 function enable_stencil_testing()
 {
+	if(GL._state.stencil_testing === true) return;
+	GL._state.stencil_testing = true;
 	GL.enable(GL.STENCIL_TEST);
 }
 
 function disable_stencil_testing()
 {
+	if(GL._state.stencil_testing === false) return;
+	GL._state.stencil_testing = false;
 	GL.disable(GL.STENCIL_TEST);
 }
 
 function enable_alpha_blending()
 {
+	if(GL._state.blending === true) return;
+	GL._state.blending = true;
 	GL.enable(GL.BLEND);
 }
 
 function disable_alpha_blending()
 {
+	if(GL._state.blending === false) return;
+	GL._state.blending = false;
 	GL.disable(GL.BLEND);
 }
 
 function set_depth_range(min, max)
 {
+	var state = GL._state;
+	if(state.depth_min === min && state.depth_max === max) return;
+	state.depth_min = min;
+	state.depth_max = max;
+
 	GL.depthRange(min, max);
 }
 
 function set_line_width(val)
 {
+	if(GL._state.line_width === val) return;
+	GL._state.line_width = val;
+
 	GL.lineWidth(val);
 }
+
+function set_texture(texture)
+{
+	var id = null;
+	if(texture) id = texture.id;
+
+	if(GL._state.texture === id) return;
+	GL._state.texture = id;
+	GL.bindTexture(GL.TEXTURE_2D, id);
+}
+
+function set_array_buffer(buffer)
+{
+	var id = null;
+	if(buffer) id = buffer.id;
+
+	if(GL._state.array_buffer === id) return;
+	GL._state.array_buffer === id;
+	GL.bindBuffer(GL.ARRAY_BUFFER, id);
+}
+
+function set_index_buffer(buffer)
+{
+	var id = null;
+	if(buffer) id = buffer.id;
+
+	if(GL._state.index_buffer === id) return;
+	GL._state.index_buffer === id;
+	GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, id);
+}
+
+function set_shader(shader)
+{
+	if(GL._state.shader === shader) return;
+	GL._state.shader = shader;
+    GL.useProgram(shader.id);
+}
+
+function set_render_target(target)
+{
+	var rb = null;
+	var fb = null;
+
+	if(target)
+	{
+		rb = target.render_buffer || null;
+		fb = target.frame_buffer || null;
+	}
+
+	if(GL._state.frame_buffer !== fb)
+	{
+		GL.bindFramebuffer(GL.FRAMEBUFFER, fb);
+	}
+	
+	if(GL._state.render_buffer !== rb)
+	{
+		GL.bindRenderbuffer(GL.RENDERBUFFER, rb);
+	}	
+
+	GL._state.render_buffer = rb;
+	GL._state.frame_buffer = fb;
+}
+
 
 function convert_update_rate(type)
 {
@@ -3372,51 +3615,56 @@ function bind_mesh(mesh)
 		mesh.index_buffer.id = GL.createBuffer();
 	}
 }
+
 function unbind_mesh(mesh)
 {
-	GL.bindBuffer(GL.ARRAY_BUFFER, mesh.vertex_buffer.id);
-	GL.bufferData(GL.ARRAY_BUFFER, 1, GL.STATIC_DRAW);
-	GL.deleteBuffer(mesh.vertex_buffer.id);
+	var vb = mesh.vertex_buffer;
+	var ib = mesh.index_buffer;
 
-	if(mesh.index_buffer)
+	set_array_buffer(vb);
+	GL.bufferData(GL.ARRAY_BUFFER, 1, GL.STATIC_DRAW);
+	GL.deleteBuffer(vb.id);
+
+	if(ib !== null)
 	{
-		GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, mesh.index_buffer.id);
+		set_index_buffer(ib);
 		GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, 1, GL.STATIC_DRAW);
 		GL.deleteBuffer(mesh.index_buffer.id);
 	}
 
-	mesh.vertex_buffer.id = null;
-	mesh.index_buffer.id = null;
-	GL.bindBuffer(GL.ARRAY_BUFFER, null);
-	GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, null);
+	vb.id = null;
+	vb.id = null;
+	set_array_buffer(null);
+	set_index_buffer(null);
 }
+
 function update_mesh(mesh)
 {
 	var vb = mesh.vertex_buffer;
 	var ib = mesh.index_buffer;
 
-	GL.bindBuffer(GL.ARRAY_BUFFER, vb.id);
+	set_array_buffer(vb);
 	GL.bufferData(GL.ARRAY_BUFFER, vb.data, convert_update_rate(vb.update_rate));
-	GL.bindBuffer(GL.ARRAY_BUFFER, null);
-
+	set_array_buffer(null);
 
 	if(ib !== null)
 	{
 		ib.byte_size = GL.UNSIGNED_INT;
-		GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, ib.id);
+		set_index_buffer(ib);
 		GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, ib.data, convert_update_rate(ib.update_rate));
-		GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, null);
+		set_index_buffer(null);
 	}
 }
+
 function update_mesh_range(mesh, start, end)
 {
 	var vb = mesh.vertex_buffer;
 	//var start = vb.update_start * vb.stride;
 	var view = vb.data.subarray(start, end);
 
-	GL.bindBuffer(GL.ARRAY_BUFFER, vb.id);
+	set_array_buffer(vb);
 	GL.bufferSubData(GL.ARRAY_BUFFER, start * 4, view);
-	GL.bindBuffer(GL.ARRAY_BUFFER, null);
+	set_array_buffer(null);
 }
 
 
@@ -3441,18 +3689,21 @@ function convert_texture_format(format)
 		default: console.error('Invalid texture format');
 	}
 }
+
 function bind_texture(texture)
 {
 	if(texture.id === null) texture.id = GL.createTexture();
 }
+
 function unbind_texture(texture)
 {
 	GL.deleteTexture(texture.id);
 	texture.id = null;
 }
+
 function update_texture(t)
 {
-	GL.bindTexture(GL.TEXTURE_2D, t.id);
+	set_texture(t);
 	var size = convert_texture_size(t);
 	var format = convert_texture_format(t.format);
 
@@ -3486,11 +3737,12 @@ function set_sampler(sampler)
 	GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, sampler.s);
 	GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, sampler.t);
 	GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, sampler.up);
-	GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, sampler.down);	
+	GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, sampler.down);
+
 	var ext = GL.extensions.EXT_texture_filter_anisotropic;
 	if(ext !== undefined)
 	{
-		var max_anisotropy = GL.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+		var max_anisotropy = GL._parameters.max_anisotropy;
 		var anisotropy = clamp(sampler.anisotropy, 0, max_anisotropy);
 
 		GL.texParameterf
@@ -3569,17 +3821,10 @@ function unbind_shader(shader)
 
 }
 
-var _active_shader = null;
-function use_shader(shader)
-{
-	if(_active_shader === shader) return;
-	_active_shader = shader;
-    GL.useProgram(shader.id);
-}
 
 function set_uniform(name, value)
 {
-	var uniform = _active_shader.uniforms[name];
+	var uniform = GL._state.shader.uniforms[name];
 
 	//DEBUG
 	if(uniform === null || uniform === undefined) 
@@ -3647,7 +3892,7 @@ function set_uniform(name, value)
         {
 			GL.uniform1i(loc, uniform.sampler_index);
 			GL.activeTexture(GL.TEXTURE0 + uniform.sampler_index);
-			GL.bindTexture(GL.TEXTURE_2D, value.id);
+			set_texture(value);
 			return;
 		}
 		/*
@@ -3707,7 +3952,7 @@ function set_attributes(shader, mesh)
 	var ext = GL.extensions.ANGLE_instanced_arrays;
 
 	var vb = mesh.vertex_buffer;
-	GL.bindBuffer(GL.ARRAY_BUFFER, vb.id);
+	set_array_buffer(vb);
 
 	for(var k in vb.attributes)
 	{
@@ -3737,7 +3982,7 @@ function update_instance_buffers(buffers)
     for(var k in buffers)
     {
         var b = buffers[k];
-        GL.bindBuffer(GL.ARRAY_BUFFER, b.id);
+        set_array_buffer(b);
         GL.bufferData(GL.ARRAY_BUFFER, b.data, GL.STATIC_DRAW);
     }
 }
@@ -3747,25 +3992,25 @@ function set_instance_attributes(shader, buffers)
 	var ext = GL.extensions.ANGLE_instanced_arrays;
     for(var k in buffers)
     {
-        var buffer = buffers[k];
+        var b = buffers[k];
         var sa = shader.attributes[k];
         if(sa === undefined) continue;
 
-        GL.bindBuffer(GL.ARRAY_BUFFER, buffer.id);
+        set_array_buffer(b);
         GL.enableVertexAttribArray(sa);
-        GL.vertexAttribPointer(sa, buffer.stride, GL.FLOAT,buffer.normalized, buffer.stride * 4, 0);
+        GL.vertexAttribPointer(sa, b.stride, GL.FLOAT, b.normalized, b.stride * 4, 0);
         ext.vertexAttribDivisorANGLE(sa, 1);
     }
 }
 
 function draw_mesh(mesh)
 {
-	set_attributes(_active_shader, mesh);
+	set_attributes(GL._state.shader, mesh);
 	var layout = convert_mesh_layout(mesh.layout);
 	
 	if(mesh.index_buffer !== null)
 	{
-		GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, mesh.index_buffer.id);
+		set_index_buffer(mesh.index_buffer);
     	GL.drawElements(layout, mesh.index_buffer.count, GL.UNSIGNED_INT, 0);
 	}
     else
@@ -3773,22 +4018,22 @@ function draw_mesh(mesh)
     	GL.drawArrays(layout, 0, mesh.vertex_buffer.count);
     }
 
-    GL.bindBuffer(GL.ARRAY_BUFFER, null);
-    GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, null);
+    set_array_buffer(null);
+    set_index_buffer(null);
 }
 
 function draw_mesh_instanced(mesh, instances, count)
 {
 	var ext = GL.extensions.ANGLE_instanced_arrays;
 
-    set_attributes(_active_shader, mesh);
-	set_instance_attributes(_active_shader, instances);
+    set_attributes(GL._state.shader, mesh);
+	set_instance_attributes(GL._state.shader, instances);
 
 	var layout = convert_mesh_layout(mesh.layout);
 
 	if(mesh.index_buffer !== null)
 	{
-		GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, mesh.index_buffer.id);
+		set_index_buffer(meshes.index_buffer);
     	ext.drawElementsInstancedANGLE(layout, mesh.index_buffer.count, GL.UNSIGNED_INT, 0, count);
 	}
     else
@@ -3796,25 +4041,15 @@ function draw_mesh_instanced(mesh, instances, count)
     	ext.drawArraysInstancedANGLE(layout, 0, mesh.vertex_buffer.count, count);
     }
 
-    GL.bindBuffer(GL.ARRAY_BUFFER, null);
-    GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, null);
-}
-
-
-var BlendMode = 
-{
-	DEFAULT: 0,
-	NONE: 1,
-	DARKEN: 2,
-	LIGHTEN: 3,
-	DIFFERENCE: 4,
-	MULTIPLY: 5,
-	SCREEN: 6,
-	INVERT: 7,
+    set_array_buffer(null);
+    set_index_buffer(null);
 }
 
 function set_blend_mode(mode)
 {
+	if(GL._state.blend_mode === mode) return;
+	GL._state.blend_mode = mode;
+
 	switch(mode)
 	{
 		case BlendMode.ADD:
@@ -3868,21 +4103,12 @@ function set_blend_mode(mode)
 	}
 }
 
-var DepthMode = 
-{
-	DEFAULT: 0,
-	NEVER: 1,
-	LESS: 2,
-	LESS_OR_EQUAL: 3,
-	EQUAL: 4,
-	GREATER: 5,
-	NOT_EQUAL: 6,
-	GREATER_OR_EQUAL: 7,
-	ALWAYS: 8,
-}
 
 function set_depth_mode(mode)
 {
+	if(GL._state.depth_mode === mode) return;
+	GL._state.depth_mode === mode;
+
 	switch(mode)
 	{
 		case DepthMode.NEVER: GL.depthFunc(GL.NEVER); return;
@@ -3899,57 +4125,20 @@ function set_depth_mode(mode)
 
 function bind_render_target(t)
 {
+	if(t.frame_buffer !== null) return;
 	t.frame_buffer = GL.createFramebuffer();
 }
-
-/*
-function bind_render_target(t)
-{
-	bind_texture(t.color);
-	bind_texture(t.depth);
-
-	update_texture(t.color);
-	update_texture(t.depth);
-
-	t.frame_buffer = GL.createFramebuffer();
-	GL.bindFramebuffer(GL.FRAMEBUFFER, t.frame_buffer);
-
-	set_render_target_attachment(GL.COLOR_ATTACHMENT0, t.color);
-	set_render_target_attachment(GL.DEPTH_ATTACHMENT, t.depth);
-
-	//DEBUG
-	verify_render_target();
-	//END	
-
-	GL.bindFramebuffer(GL.FRAMEBUFFER, null);
-	GL.bindRenderbuffer(GL.RENDERBUFFER, null);
-}
-*/
 
 function set_render_target_color(texture)
 {
-	GL.bindTexture(GL.TEXTURE_2D, texture.id);
+	set_texture(texture);
 	GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, texture.id, 0);
 }
 
 function set_render_target_depth(texture)
 {
-	GL.bindTexture(GL.TEXTURE_2D, texture.id);
+	set_texture(texture);
 	GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.TEXTURE_2D, texture.id, 0);
-}
-
-function set_render_target(target)
-{
-	if(target === null)
-	{
-		GL.bindFramebuffer(GL.FRAMEBUFFER, null);
-		GL.bindRenderbuffer(GL.RENDERBUFFER, null);
-	}
-	else
-	{
-		GL.bindFramebuffer(GL.FRAMEBUFFER, target.frame_buffer);
-		GL.bindRenderbuffer(GL.RENDERBUFFER, target.render_buffer);
-	}
 }
 
 
@@ -3960,7 +4149,7 @@ function verify_webgl_context()
 	if(GL.isContextLost && GL.isContextLost()) console.error('GL context lost');
 }
 
-function verify_render_target()
+function verify_frame_buffer()
 {
 	var status = GL.checkFramebufferStatus(GL.FRAMEBUFFER);
 	if(status != GL.FRAMEBUFFER_COMPLETE)
@@ -5012,6 +5201,77 @@ function quad_mesh(width, height, x_offset, y_offset)
     update_mesh(mesh);
     return mesh;
 }
+function sphere_mesh(radius, segments, rings, col)
+{
+	var elements = (rings + 1) * (segments + 1);
+
+    var attributes = 
+    {
+        position: VertexAttribute(3, false),
+        uv: VertexAttribute(2, false),
+    };
+
+    var data = new Float32Array(elements * 5);
+
+	var lat;
+	var lng;
+	var t = 0;
+	for(lat = 0; lat <= rings; ++lat)
+	{      
+        var theta = lat * PI / rings;
+        var sintheta = Math.sin(theta);
+        var costheta = Math.cos(theta);
+
+        for(lng = 0; lng <= segments; ++lng)
+        {
+            var phi = lng * TAU / segments;
+            var sinphi = Math.sin(phi);
+            var cosphi = Math.cos(phi);
+
+           	var x = cosphi * sintheta;
+          	var y = costheta;
+            var z = sinphi * sintheta;
+            
+            data[  t] = x * radius;
+            data[t+1] = y * radius;
+            data[t+2] = z * radius;
+
+            data[t+3] = 1.0 - (lng / segments);
+            data[t+4] = 1.0 - (lat / rings);
+
+            t += 5;
+        }
+    }
+
+    var tris = new Uint32Array(elements * 6);
+    t = 0;
+    for(lat = 0; lat < rings; ++lat)
+	{ 
+		for(lng = 0; lng < segments; ++lng)
+        {
+        	var i = lat * (segments + 1) + lng;
+        	var j = i + segments + 1;
+
+		    tris[  t] = i;
+		    tris[t+1] = i+1;
+		    tris[t+2] = j;
+		    tris[t+3] = j;
+		    tris[t+4] = i+1;
+		    tris[t+5] = j+1;
+
+		    t += 6;
+        }
+    }
+
+    var vb = VertexBuffer(data, attributes);
+    var ib = IndexBuffer(tris);
+
+    var mesh = Mesh(vb, ib, MeshLayout.TRIANGLES);
+    bind_mesh(mesh);
+    update_mesh(mesh);
+    return mesh;
+}
+
 function Animation(target)
 {
 	var r = {};
@@ -5518,28 +5778,14 @@ var app = {};
 
 function main()
 {
-    // DEBUG
-    window.addEventListener('focus', function()
-    { 
-        console.log('FOCUS'); 
-        app.has_focus = true; 
-    });
-    window.addEventListener('blur', function()
-    { 
-        console.log('BLUR'); 
-        app.has_focus = false; 
-    });
-    // END
-
     app.has_focus = true;
+    app.needs_resize = false;
     app.res = window.devicePixelRatio | 0;
-    var container = document.querySelector('.app');
-    app.container = container;
-
+    app.container = document.querySelector('.app');
     app.time = Time();
-    app.canvas = Canvas(container, app.view);
+    app.canvas = Canvas(app.container, app.view);
     app.view = Vec4(0,0,app.canvas.width, app.canvas.height);
-    app.input = Input(container);
+    app.input = Input(app.container);
     app.webgl = WebGL(app.canvas,
     {
         alpha: false,
@@ -5555,28 +5801,22 @@ function main()
     app.sampler = default_sampler();
     //app.audio = Sound();
 
-    // LOAD ASSETS
-    app.assets = AssetGroup();
-    app.preloader = Preloader(container);
-    app.assets_loaded = false;
+    window.addEventListener('focus', function()
+    { 
+        console.log('FOCUS'); 
+        app.has_focus = true; 
+    });
+    window.addEventListener('blur', function()
+    { 
+        console.log('BLUR'); 
+        app.has_focus = false; 
+    });
+    window.addEventListener('resize', function()
+    {
+        app.needs_resize = true;
+    });
 
-    var r = Request
-    (
-        'arraybuffer', 'assets/assets.txt',
-        function(e)
-        {
-            read_asset_file(e, app.assets);
-            app.assets_loaded = true;
-            hide_preloader(app.preloader);
-            init();
-        },
-        function(e)
-        {
-            var percent_loaded =  e.loaded / e.total;
-            update_preloader(app.preloader, percent_loaded);
-        },
-        null
-    );    
+    init();    
 }
 
 window.addEventListener('load', main);
@@ -5680,6 +5920,21 @@ function hide_preloader(pl)
 function Flow(res)
 {
 	var r = {};
+
+    r.assets = AssetGroup('flow');
+    r.screen_quad = quad_mesh(2,2);
+    r.quad = quad_mesh(1, 1);
+
+    load_assets(r.assets, 
+    [
+        'assets/flow.txt',
+    ],
+    function()
+    {
+        bind_assets(r.assets);
+    });
+    
+
     r.NUM_PARTICLES = res * res;
     r.hardness = 0.4;
     r.radius = 0.3;
@@ -5687,18 +5942,11 @@ function Flow(res)
     r.speed_factor = 0.1; 
     r.drop_rate = 0.0007;
     r.cursor_velocity = 0;
-    //r.drop_rate = 0.0012; 
-
     r.drop_rate_bump = 0.0001;
-    // /r.drop_rate_bump = 0.0008;
-
     r.flow_speed = 0.02;
-    //r.flow_speed = 0.02;
-
 
 	// PARTICLE TEXTURES
     var flow_sampler = Sampler(GL.CLAMP_TO_EDGE, GL.CLAMP_TO_EDGE,GL.LINEAR,GL.LINEAR, 1);
-    //load_texture_async('img/test.png', flow_sampler);
 
     var w = app.view[2];
     var h = app.view[3];
@@ -5766,18 +6014,22 @@ function Flow(res)
     r.flow_field = rgba_texture(w, h, flow_pixels, flow_sampler);
     bind_render_target(ft);
     set_render_target(ft);
-    //set_clear_color([0.5,0.5,0.0,1.0]);
-    //clear_screen();
+    set_render_target_color(r.flow_field);
+
+    set_render_target(null);
 
     r.flow_target = ft;
 
     return r;
 }
 
-function render_flow(f, meshes, textures, shaders)
+function render_flow(f)
 {
-	disable_depth_testing();
-    disable_stencil_testing();
+    if(f.assets.loaded === false) return;
+
+    var meshes = f.assets.meshes; 
+    var textures = f.assets.textures; 
+    var shaders = f.assets.shaders;
 
     // DRAW FLOW FIELD
 
@@ -5799,24 +6051,29 @@ function render_flow(f, meshes, textures, shaders)
     var vel = vec_length(input.mouse.delta) / app.view[2];
     f.cursor_velocity = lerp(f.cursor_velocity, vel, 0.9 * app.time.dt);
 
+
+    set_viewport(app.view);
+    disable_depth_testing();
+    disable_stencil_testing();
+
     if(key_held(Keys.MOUSE_LEFT))
     {
 	    enable_alpha_blending();
 	    set_blend_mode(BlendMode.DEFAULT);
 	    set_render_target(f.flow_target);
-	    set_render_target_color(f.flow_field);
-	    use_shader(shaders.velocity);
+	    //set_render_target_color(f.flow_field);
+	    set_shader(shaders.velocity);
 	    set_uniform('mouse', mouse);
 	    set_uniform('velocity', delta);
 	    set_uniform('hardness', f.hardness);
 	    set_uniform('radius', f.cursor_velocity);
-	    draw_mesh(meshes.quad);
+	    draw_mesh(f.quad);
 	    disable_alpha_blending();
 	}
 
     /*
     set_render_target(null);
-   	use_shader(shaders.final);
+   	set_shader(shaders.final);
    	set_uniform('image', f.flow_field);
    	draw_mesh(meshes.screen_quad);
     */
@@ -5825,44 +6082,39 @@ function render_flow(f, meshes, textures, shaders)
     set_render_target(f.particle_target);
     set_render_target_color(f.screen_texture);
     set_viewport(app.view);
-    use_shader(shaders.screen_particles);
+    set_shader(shaders.screen_particles);
     set_uniform('screen', f.background_texture);
     set_uniform('opacity', f.fade_opacity);
-    draw_mesh(meshes.screen_quad);
+    draw_mesh(f.screen_quad);
 
     // DRAW PARTICLES
     enable_alpha_blending();
 	set_blend_mode(BlendMode.OVERLAY);
-    use_shader(shaders.draw_particles);
+    set_shader(shaders.draw_particles);
     set_uniform('res', f.particle_res); 
     set_uniform('particles', f.particle_state_tex_A);
     set_uniform('flow_field', f.flow_field);
     set_uniform('flow_speed',13.0); 
     set_uniform('offset', (app.time.elapsed * 0.3) % 100.0);
-    //set_uniform('ramp', textures.velocity);
-    //set_uniform('rand_seed', Math.random());
-    //set_uniform('drop_rate', 0.001);
-    //set_uniform('drop_rate_bump', f.drop_rate_bump);
     draw_mesh(f.particle_mesh);
 
     // DRAW SCREEN TEXTURE
     set_render_target(null);
     set_viewport(app.view);
     enable_alpha_blending();
-    //set_blend_mode(BlendMode.ADD);
-    use_shader(shaders.screen_particles);
+    set_shader(shaders.screen_particles);
     set_uniform('screen', f.screen_texture);
     set_uniform('opacity', 1.0);
-    draw_mesh(meshes.screen_quad);
+    draw_mesh(f.screen_quad);
 
     // DRAW CURSOR
 
-    use_shader(shaders.cursor);
+    set_shader(shaders.cursor);
     set_uniform('mouse', mouse);
     set_uniform('delta', f.cursor_velocity * 50);
-    set_uniform('aspect', app.camera.aspect);
+    set_uniform('aspect', app.view[2] / app.view[3]);
     set_uniform('time', app.time.elapsed);
-    draw_mesh(meshes.quad);
+    draw_mesh(f.quad);
 
     var tmp = f.background_texture;
     f.background_texture = f.screen_texture;
@@ -5874,7 +6126,7 @@ function render_flow(f, meshes, textures, shaders)
     set_render_target(f.particle_target);
     set_render_target_color(f.particle_state_tex_A);
     set_viewport(_Vec4(0,0, f.particle_res, f.particle_res));
-    use_shader(shaders.update_particles);
+    set_shader(shaders.update_particles);
     set_uniform('particles', f.particle_state_tex_B);
     set_uniform('flow_field', f.flow_field);
     set_uniform('res', f.particle_res);
@@ -5882,40 +6134,376 @@ function render_flow(f, meshes, textures, shaders)
     set_uniform('flow_speed', f.flow_speed); 
     set_uniform('drop_rate', f.drop_rate);
     set_uniform('drop_rate_bump', f.drop_rate_bump);
-    draw_mesh(meshes.screen_quad);
+    draw_mesh(f.screen_quad);
 
     var tmp2 = f.particle_state_tex_B;
     f.particle_state_tex_B = f.particle_state_tex_A;
     f.particle_state_tex_A = tmp2;
 }
-var AppState = 
+var MarbleState = 
 {
-    INIT: 0,
-    INTRO: 1,
+    ENTER: 0,
+    VISIBLE: 1,
+    EXIT: 2,
+    HIDDEN: 3,
 };
 
-function init()
+function BlueMarble()
 {
-    var assets = app.assets;
-    bind_assets(assets);
+	var r = {};
 
-    load_texture_async('img/velocity.png');
+    r.assets = AssetGroup('marble');
+    load_assets(r.assets, 
+    [
+        'img/earth_day.jpg',
+        'img/earth_night.jpg',
+        'assets/marble.txt',
+    ],
+    function()
+    {
+        bind_assets(r.assets);
+    });
 
-    // MESHES
-    assets.meshes.screen_quad = quad_mesh(2,2);
-    assets.meshes.quad = quad_mesh(1, 1);
+    r.state = MarbleState.HIDDEN;
+    r.timer = 0;
 
-    // ENTITIES
-    app.root = Entity(0,0,0, null);
+    r.density = -2.906;
+    r.brightness = 1.09;
 
-    // CAMERA
-    app.camera = Camera(0.01, 50, 30, app.view);
-    set_vec3(app.camera.position, 0,0,0);
+    r.root = Entity(0,0,0, null);
+    r.earth = Entity(0,0,0, r.root);
+    r.camera = Camera(0.01, 500, 60, app.view);
+    set_vec3(r.camera.position, 0,0,20);
 
-    // FLOW
-    app.flow = Flow(512);
+    r.sphere = sphere_mesh(10.0, 64,64);
+    
+    r.spin_velocity = 0.15;
+    r.spin = Vec3(0,0,15);
 
-    // UI
+	return r;
+}
+
+function reset_blue_marble(bm)
+{
+    r.density = -2.906;
+    r.brightness = 1.09;
+    set_vec3(r.camera.position, 0,0,20);
+    set_vec3(r.spin, 0,0,15);
+}
+
+function unload_blue_marble(bm)
+{
+    unbind_texture(bm.assets.textures.earth_day);
+    unbind_texture(bm.assets.textures.earth_night);
+    unbind_mesh(bm.sphere);
+}
+
+function show_blue_marble()
+{
+    var bm = app.blue_marble;
+    if(bm.state !== MarbleState.HIDDEN) return;
+
+    LOG('Showing Blue Marble');
+
+    bm.timer = 0;
+    bm.state = MarbleState.ENTER;
+}
+
+function hide_blue_marble()
+{
+    LOG('Hiding Blue Marble');
+
+    var bm = app.blue_marble;
+    bm.timer = 0;
+    bm.state = MarbleState.EXIT;
+}
+
+function update_blue_marble(bm, dt)
+{
+    switch(bm.state)
+    {
+        case MarbleState.ENTER:
+        {
+            bm.timer += dt;
+            bm.overlay = bm.timer * 0.5;
+            if(bm.timer > 2.0)
+            {
+                bm.timer = 0;
+                bm.state = MarbleState.VISIBLE;
+            }
+            break;
+        }
+        case (MarbleState.ENTER || MarbleState.VISIBLE):
+        {
+            free_look(bm.camera, dt, 80);
+            update_camera(bm.camera);
+
+            if(key_held(Keys.MOUSE_LEFT))
+            {
+                bm.spin[1] += input.mouse.delta[0] * dt;
+                bm.spin_velocity = input.mouse.delta[0] * dt;
+            }
+            else
+            {
+                bm.spin[1] += bm.spin_velocity;
+            }
+
+            //bm.spin_velocity = smooth_float_towards(bm.spin_velocity, 3.0, dt, 0.0001);
+
+            quat_set_euler(bm.earth.rotation, bm.spin);
+
+            if(key_held(Keys.LEFT)) bm.density += dt;
+            if(key_held(Keys.RIGHT)) bm.density -= dt;
+            if(key_held(Keys.UP)) bm.brightness += dt;
+            if(key_held(Keys.DOWN)) bm.brightness -= dt;
+
+            update_entity(bm.root);
+
+            break;
+        }
+        case MarbleState.EXIT:
+        {
+            bm.timer += dt;
+            bm.overlay = 1.0 - (bm.timer * 0.5);
+            if(bm.timer > 2.0)
+            {
+                bm.state = MarbleState.HIDDEN;
+                bm.timer = 0;
+            }
+            break;
+        }
+        case MarbleState.HIDDEN:
+        {
+            break;
+        }
+    }
+}
+
+function render_blue_marble(bm)
+{
+	if(bm.assets.loaded === false) return;
+
+	var shaders = bm.assets.shaders;
+	var textures = bm.assets.textures;
+	var meshes = bm.assets.meshes;
+	var cam = bm.camera;
+
+	set_shader(shaders.earth);
+    set_uniform('model', bm.earth.world_matrix);
+    set_uniform('view', cam.view);
+    set_uniform('proj', cam.projection);
+    set_uniform('camera', cam.position);
+    set_uniform('light', _Vec3(3,3,3));
+    set_uniform('density', bm.density);
+    set_uniform('brightness', bm.brightness);
+    set_uniform('day', textures.earth_day);
+    set_uniform('night', textures.earth_night);
+    draw_mesh(bm.sphere);
+
+    // draw overlay
+    /*
+    set_shaders(app.assets.shaders.overlay);
+    set_uniform('alpha', bm.overlay);
+    draw_mesh(app.assets.meshes.screen_quad);
+    */
+}
+var CardState = 
+{
+    DEFAULT: 0,
+    HOVER: 1,
+};
+
+var WorkState = 
+{
+	ENTER: 0,
+	VISIBLE: 1,
+	HIDDEN: 2,
+	EXIT: 3,
+};
+
+function Card(x_pos,texture, color, parent)
+{
+    var r = {};
+    r.entity = Entity(x_pos,0,0, parent);
+    r.bounds = Vec4();
+    r.color = color;
+    r.fill = 0;
+    r.texture = texture;
+    r.opacity = 1;
+    r.state = CardState.DEFAULT;
+    r.timer = 0;
+    return r;  
+}
+
+function Work()
+{
+	var r = {};
+
+	r.state = WorkState.HIDDEN;
+	r.root = Entity(0,0,0, null);
+	r.assets = AssetGroup('work');
+    r.card_mesh = quad_mesh(0.5,2.0,0.0,0.0);
+    //r.camera = UICamera(app.view);
+
+    load_assets(r.assets, 
+    [
+        'assets/work.txt',
+    ],
+    function()
+    {
+        bind_assets(r.assets);
+    });
+
+
+	r.cards = 
+	[
+		Card(-0.75, null, Vec4(0.0, 0.5, 0.8, 1.0), r.root),
+		Card(-0.25, null, Vec4(0.5, 0.0, 0.8, 1.0), r.root),
+		Card( 0.25, null, Vec4(0.5, 0.8, 0.3, 1.0), r.root),
+		Card( 0.75, null, Vec4(0.8, 0.5, 0.8, 1.0), r.root),
+	];
+
+	app.anims.work_enter = new TimelineMax({paused:true}).
+		staggerFrom(r.cards, 0.4, {fill:-2}, 0.1);
+
+	return r;
+}
+
+function update_work(work, dt)
+{
+	var cards = work.cards;
+	for(var i = 0; i < cards.length; ++i)
+	{
+		var card = cards[i];
+		card.entity.position[1] = card.fill;
+		card.state = CardState.DEFAULT;
+	}
+
+	switch(work.state)
+	{
+		case WorkState.ENTER:
+		{
+			work.timer += dt;
+			if(work.timer > 0.7)
+			{
+				work.state = WorkState.VISIBLE;
+				work.timer = 0;
+			}
+			break;
+		}
+		case WorkState.VISIBLE:
+		{
+			var press = key_down(Keys.MOUSE_LEFT);
+			var mw = _Vec3();
+
+			mw[0] = input.mouse.position[0] / app.view[2];  //0 -> 1
+			mw[1] = input.mouse.position[1] / app.view[3];
+			mw[0] = (mw[0] * 2.0) - 1.0;  // -1 -> +1
+			mw[1] = (mw[1] * 2.0) - 1.0;
+
+			// Test for hover on x-axis
+			if(mw[0] < -0.5) cards[0].state = CardState.HOVER;
+			else if(mw[0] < 0.0) cards[1].state = CardState.HOVER;
+			
+			if(mw[0] > 0.5) cards[3].state = CardState.HOVER;
+			else if(mw[0] > 0.0) cards[2].state = CardState.HOVER;
+
+			for(var i = 0; i < cards.length; ++i)
+			{
+				var card = cards[i];
+				if(card.state === CardState.HOVER && press)
+				{
+					select_work(i);
+				}
+			}
+
+			break;
+		}
+		case WorkState.HIDDEN:
+		{
+			break;
+		}
+		case WorkState.EXIT:
+		{
+			work.timer += dt;
+			if(work.timer > 0.7)
+			{
+				work.state = WorkState.HIDDEN;
+				work.timer = 0;
+			}
+			break;
+		}
+	}
+
+	update_entity(work.root);
+}
+
+function show_work_menu()
+{
+	if(app.work.state !== WorkState.HIDDEN) return;
+
+	LOG('Opening Work Menu');
+
+	app.work.timer = 0;
+	app.work.state = WorkState.ENTER;
+	app.anims.work_enter.restart();
+}
+
+function hide_work_menu()
+{
+	if(app.work.state !== WorkState.VISIBLE) return;
+
+	LOG('Closing Work Menu');
+
+	app.work.timer = 0;
+	app.work.state = WorkState.EXIT;
+	app.anims.work_enter.reverse();
+}
+
+function select_work(index)
+{
+	LOG('Selecting Work: ' + index);
+
+	if(index === 0 && app.state !== AppState.FLOW) app.state = AppState.FLOW;
+
+	if(index === 1 && app.state !== AppState.MARBLE) 
+	{
+		app.state = AppState.MARBLE;
+		show_blue_marble();
+	}
+
+	hide_work_menu();
+}
+
+function render_work(work)
+{
+	if(work.assets.loaded === false) return;
+
+	var shaders = work.assets.shaders;
+	//var camera = work.camera;
+	//var mvp = _Mat4();
+
+	disable_depth_testing();
+	set_blend_mode(BlendMode.DEFAULT);
+	set_render_target(null);
+	set_viewport(app.view);
+	set_shader(shaders.card);
+
+	var cards = app.work.cards;
+	for(var i = 0; i < cards.length; ++i)
+	{
+		var card = cards[i];
+		//mat4_mul(mvp, card.entity.world_matrix, camera.view_projection);
+		set_uniform('mvp', card.entity.world_matrix);
+		set_uniform('color', card.color);
+		if(card.state === CardState.HOVER) set_uniform('overlay', 0.8);
+		else set_uniform('overlay', 1.0);
+		draw_mesh(work.card_mesh);
+	}
+}
+function UI()
+{
+	// UI
     var ui = find
     ({
         //cursor_container: '.cursor-container',
@@ -5924,13 +6512,16 @@ function init()
         name_text: '.title .name',
         subtitle_text: '.title .subtitle',
         demo_text: '.title .demo',
-
     });
-    app.ui = ui;
-    LOG(app.ui)
+    //LOG(ui);
 
-    var anims = {};
-    app.anims = anims;
+    ui.menu_items[0].addEventListener('click', function()
+    {
+        show_work_menu();
+    });
+
+
+   	var anims = app.anims;
 
     anims.menu_in = new TimelineMax({paused:true}).
         staggerFrom(ui.menu_items, 0.4, {x:50, opacity:0}, 0.1);
@@ -5953,13 +6544,31 @@ function init()
         from(ui.demo_text, 0.4, {x:-100, opacity:0}, 1.5);
     anims.demo.restart();
 
+    return ui;
+}
+var AppState = 
+{
+    INIT: 0,
+    FLOW: 1,
+    WORK: 2,
+    MARBLE: 3,
+};
 
-    app.gl_draw = GL_Draw(12000);
+function init()
+{
+    app.anims = {};
+
+    app.flow = Flow(512);
+    app.work = Work();
+    app.ui = UI();
+    app.blue_marble = BlueMarble();
+   
+    //app.gl_draw = GL_Draw(12000);
 
     set_clear_color([0.0,0.0,0.0,1]);
     clear_screen();
 
-    app.state = AppState.INTRO;
+    app.state = AppState.FLOW;
 
     set_viewport(app.view);
     clear_stacks();
@@ -5982,30 +6591,11 @@ function update(t)
     }
 
     var dt = app.time.dt;
-    var camera = app.camera;
     var ui = app.ui;
 
-    free_look(camera, dt, 80);
-    update_camera(camera);
+    update_work(app.work, dt);
+    update_blue_marble(app.blue_marble, dt);
 
-    var mw = _Vec3();
-    get_mouse_world_position(mw, camera);
-
-    //var pos = _Vec3();
-    //vec_eq(pos, input.mouse.position);
-    //vec_div_f(pos, pos, app.res);
-    //set_element_pos(ui.cursor_container, pos);
-
-    if(input.mouse.delta[0] !== 0 || input.mouse.delta[1] !== 0)
-    {
-       // ui.cursor.classList.add('moving');
-    }
-    else
-    {
-        //ui.cursor.classList.remove('moving')
-    }
-
-    update_entity(app.root, true);
     render();
 
     update_input();
@@ -6014,22 +6604,37 @@ function update(t)
 
 function render()
 {
-    var shaders = app.assets.shaders;
-    var meshes = app.assets.meshes;
-    var textures = app.assets.textures;
-    var camera = app.camera;
-    var mvp = _Mat4();
-    var aspect = app.view[2] / app.view[3];
+    switch(app.state)
+    {
+        case AppState.FLOW:
+        {
+            render_flow(app.flow);
+            break;
+        }
+        case AppState.MARBLE:
+        {
+            render_blue_marble(app.blue_marble);
+            break;
+        }
+    }
 
-    if(textures.velocity.loaded)
-        render_flow(app.flow, meshes, textures, shaders);
+    render_work(app.work);
 
+
+    // DRAW FINAL RENDER BUFFER
+    /*
+    set_shader(app.assets.shaders.final);
+    set_uniform('final', app.render_target.color);
+    draw_mesh(app.assets.meshes.screen_quad);
+    */
 
     // DEBUG DRAW
+    /*
     set_render_target(null);
     set_viewport(app.view);
     var ctx = app.gl_draw;
     //draw_transform(ctx, app.root.world_matrix);
     render_gl_draw(ctx, app.camera);
+    */
 }
 
