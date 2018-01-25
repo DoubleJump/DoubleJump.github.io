@@ -60,24 +60,51 @@ function BinaryReader(buffer, alignment)
     return r;
 }
 
-function Request(response_type, url, success, progress, fail)
+function Request(params)
 {
     var r = new XMLHttpRequest();
-    r.open('GET', url, true);
-    r.responseType = response_type;
+
+    var type = params.type || 'GET';
+    r.open(type, params.url, true);
+
+    r.responseType = params.response_type || 'arraybuffer';
+    
+    if(params.fail)
+    {
+        r.error = params.fail;
+        r.abort = params.fail;
+    }
+
+    if(params.headers)
+    {
+        for(var k in params.headers)
+        {
+            var h = params.headers[k];
+            r.setRequestHeader(k, h);
+        }
+    }
+
     r.onload = function(e)
     {
         if(e.target.status === 200)
         {
-            success(e.target.response);
+            params.success(e.target.response);
         }
         else 
         {
-            if(fail) fail(e);
+            if(params.fail) params.fail(e);
         }
     }
-    r.onprogress = progress;
-    r.send();
+
+    if(params.onchange)
+        r.onreadystatechange = params.onchange;
+
+    if(params.onprogress) 
+        r.onprogress = params.progress;
+
+    if(params.auto_send !== false)
+        r.send();
+
     return r;
 }
 
@@ -262,12 +289,17 @@ function load_assets(ag, urls, onload)
         {
             case 'txt':
             {
-                var rq = Request('arraybuffer', url, function(data)
+                var rq = Request(
                 {
-                    read_asset_file(data, ag);
-                    ag.load_count--;
-                    update_load_progress(ag);
+                    url: url,
+                    success: function(data)
+                    {
+                        read_asset_file(data, ag);
+                        ag.load_count--;
+                        update_load_progress(ag);
+                    },
                 });
+                
                 break;
             }
             case 'png':
@@ -4184,86 +4216,54 @@ function log_webgl_info()
 function AudioClip()
 {
 	var r = {};
+	r.src = app.sound.ctx.createBufferSource();
+	r.duration;
+	r.playing = false;
 	r.loaded = false;
-	r.data ;
-	r.volume;
 	return r;
 }
 
 function Sound()
 {
 	var r = {};
-	r.ctx = null,
-	r.decode_count = 0;
-	r.oscillator = null;
-	r.gain = null;
-
+	
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;
 	r.ctx = new AudioContext();
+	r.gain = r.ctx.createGain();
+	r.gain.connect(r.ctx.destination);
 
 	return r;
 }
 
-function load_sound_async(url)
+function play_sound(sound, at, loop)
 {
-	var s = AudioClip();
-	var name = url.match(/[^\\/]+$/)[0];
-	name = name.split(".")[0];
-    app.assets.sounds[name] = s;
-
-	var r = Request('arraybuffer', url);
-	r.onload = function(e)
-    {
-    }
-    r.send();
+	sound.src.connect(app.sound.ctx.destination);
+	sound.playing = true;
+	sound.src.loop = loop || false;
+	sound.src.start(at || 0);
 }
 
-function read_audio(ag)
+function stop_sound(sound)
 {
-	var name = read_string();
-	var vb_size = read_i32();
-	var vb_data = read_f32(vb_size);
-
-	var sound = AudioClip();
-    sound.name = name;
-	if(ag) ag.sounds[name] = sound;
-	return sound;
+	sound.playing = false;
+	sound.src.stop(0);
 }
 
-
-/*
-decode: function(sounds)
+function mute_audio(val)
 {
-	this.decode_count = sounds.length;
-	for(var i = 0; i < this.decode_count; ++i)
-	{
-		this.ctx.decodeAudio(sounds[i].buffer, on_decode);
-	}
-},
+	var ctx = app.sound.ctx;
+	app.sound.gain.gain.setValueAtTime(0, ctx.currentTime);
 
-on_decode: function(n, buffer)
-{
-	this.decode_count--;
-	if(this.decode_count === 0)
-	{
-		gb.load_complete(1);
-	}
+	LOG('Sound is off');
 }
 
-play: function(s)
+function unmute_audio()
 {
-	var src = this.ctx.createBufferSource();
-	src.buffer = s.buffer;
-	src.connect(this.ctx.destination);
-	src.start(0);
-},
+	var ctx = app.sound.ctx;
+	app.sound.gain.gain.setValueAtTime(1, ctx.currentTime);
 
-cross_face: function(s)
-{
-
-},
-*/
-
+	LOG('Sound is on');
+}
 var KeyState = 
 {
 	RELEASED: 0,
@@ -4578,7 +4578,6 @@ function GL_Draw(buffer_size)
 
 	// LINES
 
-	r.line_shader = app.assets.shaders.basic;
 	var line_attributes = 
 	{
 		position: PositionAttribute(),
@@ -4592,7 +4591,6 @@ function GL_Draw(buffer_size)
 
     // TRIANGLES
 
-    r.tri_shader = app.assets.shaders.rect;
     var tri_attributes = 
     {
     	position: PositionAttribute(),
@@ -4630,10 +4628,12 @@ function reset_gl_draw(ctx)
 
 function render_gl_draw(ctx, camera)
 {
+	if(app.assets.loaded === false) return;
+
 	update_mesh(ctx.lines);
 	update_mesh(ctx.triangles);
 
-	use_shader(ctx.line_shader);
+	set_shader(app.assets.shaders.basic);
 	set_uniform('mvp', camera.view_projection);
 	draw_mesh(ctx.lines);
 
@@ -4647,6 +4647,31 @@ function render_gl_draw(ctx, camera)
 	reset_gl_draw(ctx);
 }
 
+function gl_push_vertex(vertex, mesh, color, matrix)
+{
+	var index = vec3_stack.index;
+
+	var o = mesh.vertex_buffer.offset;
+	var d = mesh.vertex_buffer.data;
+	var c = color;
+	var v = _Vec3();
+	
+	mat4_mul_point(v, matrix, vertex);
+
+	d[o]   = v[0];
+	d[o+1] = v[1];
+	d[o+2] = v[2];
+	d[o+3] = c[0];
+	d[o+4] = c[1];
+	d[o+5] = c[2];
+	d[o+6] = c[3];
+
+	vec3_stack.index = index;
+
+	mesh.vertex_buffer.offset += 7;
+}
+
+/*
 function gl_push_line(start, end, mesh, color, matrix)
 {
 	var index = vec3_stack.index;
@@ -4682,6 +4707,7 @@ function gl_push_line(start, end, mesh, color, matrix)
 
 	mesh.vertex_buffer.offset += 14;
 }
+*/
 
 function gl_push_line_segment(start,end,thickness,depth, mesh, color, matrix)
 {
@@ -4863,10 +4889,15 @@ function gl_push_rect(r, depth, radius, mesh, color, matrix)
 
 }
 
+function gl_push_line(ctx, a,b)
+{
+	gl_push_vertex(a, ctx.lines, ctx.color, ctx.matrix);
+	gl_push_vertex(b, ctx.lines, ctx.color, ctx.matrix);
+}
 
 function draw_line(ctx, a,b)
 {
-	gl_push_line(a,b, ctx.lines, ctx.color, ctx.matrix);
+	gl_push_line(ctx, a,b);
 }
 
 function draw_point(ctx, p, size)
@@ -5917,6 +5948,195 @@ function hide_preloader(pl)
 {
 	pl.svg.style.display = 'none';
 }
+function AudioVis()
+{
+	var r = {};
+	r.id = '67129366c767d009ecc75cec10fa3d0f';
+	SC.initialize({client_id: r.id});
+
+	r.ui = find
+    ({
+    	root: '.sc',
+    	input: '#sc-url',
+    	button: '.sc-button',
+    	player: '.sc-player',
+    	thumbnail: '.sc-thumbnail',
+    	logo: '.sc.logo',
+    	title: '.sc-details h3',
+    	artist: '.sc-details p',
+    });
+
+    r.ui.root.style.display = 'none';
+    r.ui.button.addEventListener('click', load_sound_cloud_track);
+
+    r.camera = Camera(0.01,10.0,60,app.view);
+	set_vec3(r.camera.position, 0.4, 1.2, 1.6);
+
+	var ctx = app.sound.ctx;
+	r.analyser = ctx.createAnalyser();
+	r.analyser.fftSize = 256; //default 2048
+	//r.analyser.minDecibels = ;
+	//r.analyser.maxDecibels = ;
+	//r.analyser.smoothingTimeConstant = ;
+
+	var buffer_size = r.analyser.frequencyBinCount;
+	r.analyser_buffer = new Uint8Array(buffer_size);
+
+    r.track = null;
+
+    app.anims.show_track = new TimelineMax({paused:true}).
+    	from(r.ui.player, 0.7, {y:80, opacity:0}, 0.0);
+
+	return r;
+}
+
+function show_audio_vis()
+{
+	LOG('Showing Audio Vis');
+	var v = app.audio_vis;
+	v.ui.root.style.display = 'block';
+}
+
+function hide_audio_vis()
+{
+	LOG('Hiding Audio Vis');
+	var v = app.audio_vis;
+	v.ui.root.style.display = 'none';
+}
+
+function SoundCloudTrack(data)
+{
+	var r = {};
+	r.id = data.id;
+	r.stream_url = data.stream_url;
+	r.art_url = data.artwork_url;
+	r.artist = data.user.username;
+	r.title = data.title;
+	r.clip = AudioClip();
+	return r;
+}
+
+function load_sound_cloud_track()
+{
+	var v = app.audio_vis;
+	var track_url = v.ui.input.value;
+
+	LOG(track_url);
+	if(!track_url) return;
+
+	var resolved = 
+	'https://api.soundcloud.com/resolve.json?url=' + 
+	track_url + 
+	'&client_id=' + app.audio_vis.id; 
+    
+    var rq = Request(
+	{
+		url: resolved,
+		response_type: 'json',
+		success: function(track_info)
+		{
+
+			var name = track_info.title;
+			if(v.track !== null) return;
+			//if(v.tracks[name] !== null) return;
+
+			var track = SoundCloudTrack(track_info);
+			LOG(track);
+
+			//v.tracks[name] = track;
+			v.track = track;
+			v.ui.thumbnail.setAttribute('src', track.art_url);
+			v.ui.title.innerHTML = track.title;
+			v.ui.artist.innerHTML = track.artist;
+
+			stream_sound_cloud_track(track_info.id);
+		},
+		fail: function(err)
+		{
+			//@TODO: fail ui message
+			LOG(err);
+		}
+	});
+}
+
+function stream_sound_cloud_track(id)
+{
+	var url = 
+	'https://api.soundcloud.com/tracks/' + 
+	id + 
+	'/stream?' + 
+	'&client_id=' + 
+	app.audio_vis.id;
+
+	var rq = Request(
+	{
+		url: url,
+		success: function(data)
+		{
+			LOG(data);
+			app.sound.ctx.decodeAudioData(data, play_sound_cloud_track); //sucess, fail
+		},
+		fail: function(err)
+		{
+			LOG(err);
+		}
+	});
+}
+
+function play_sound_cloud_track(data)
+{
+	var track = app.audio_vis.track;
+	track.clip.src.buffer = data;
+	track.clip.src.connect(app.audio_vis.analyser);
+	play_sound(track.clip, 0, true);
+
+
+	app.anims.show_track.restart();
+}
+
+function update_audio_vis(vis, dt)
+{
+	if(vis.track === null) return;
+	if(app.state !== AppState.AUDIO_VIS) return;
+
+	if(key_down(Keys.M))
+	{
+		stop_sound(vis.track.clip);
+	}
+
+	var ab = vis.analyser_buffer;
+	vis.analyser.getByteFrequencyData(ab);
+
+	free_look(vis.camera, dt, 80);
+	update_camera(vis.camera);
+}
+
+function render_audio_vis(vis)
+{
+	set_clear_color(_Vec4(1,1,1,1));
+	clear_screen();
+
+	if(vis.track === null) return;
+	
+	var ctx = app.gl_draw;
+
+	var ab = vis.analyser_buffer;
+	var a = _Vec3();
+	var b = _Vec3();
+
+	set_vec4(ctx.color, 0,0,0,1);
+
+	for(var i = 1; i < ab.length; ++i)
+	{
+		a[0] = (i-1) * 0.01;
+		a[1] = ab[i-1] * 0.01;
+		b[0] = i * 0.01;
+		b[1] = ab[i] * 0.01;
+
+		draw_line(ctx, a,b);
+	}
+	render_gl_draw(ctx, vis.camera);
+}
 function Flow(res)
 {
 	var r = {};
@@ -6447,6 +6667,7 @@ function show_work_menu()
 	app.work.timer = 0;
 	app.work.state = WorkState.ENTER;
 	app.anims.work_enter.restart();
+	ui_hide_title();
 }
 
 function hide_work_menu()
@@ -6463,13 +6684,28 @@ function hide_work_menu()
 function select_work(index)
 {
 	LOG('Selecting Work: ' + index);
+	app.ui.menu_bar.classList.remove('dark');
 
-	if(index === 0 && app.state !== AppState.FLOW) app.state = AppState.FLOW;
+
+	if(index === 0 && app.state !== AppState.FLOW) 
+	{
+		app.state = AppState.FLOW;
+		//show_flow();
+	}
 
 	if(index === 1 && app.state !== AppState.MARBLE) 
 	{
 		app.state = AppState.MARBLE;
+		hide_audio_vis();
 		show_blue_marble();
+	}
+
+	if(index === 3 && app.state !== AppState.AUDIO_VIS)
+	{
+		app.state = AppState.AUDIO_VIS;
+		hide_blue_marble();
+		show_audio_vis();
+		app.ui.menu_bar.classList.add('dark');
 	}
 
 	hide_work_menu();
@@ -6480,8 +6716,6 @@ function render_work(work)
 	if(work.assets.loaded === false) return;
 
 	var shaders = work.assets.shaders;
-	//var camera = work.camera;
-	//var mvp = _Mat4();
 
 	disable_depth_testing();
 	set_blend_mode(BlendMode.DEFAULT);
@@ -6493,7 +6727,6 @@ function render_work(work)
 	for(var i = 0; i < cards.length; ++i)
 	{
 		var card = cards[i];
-		//mat4_mul(mvp, card.entity.world_matrix, camera.view_projection);
 		set_uniform('mvp', card.entity.world_matrix);
 		set_uniform('color', card.color);
 		if(card.state === CardState.HOVER) set_uniform('overlay', 0.8);
@@ -6508,6 +6741,8 @@ function UI()
     ({
         //cursor_container: '.cursor-container',
         //cursor: '.cursor',
+        title: '.title',
+        menu_bar: '.menu-bar',
         menu_items: '.menu ul',
         name_text: '.title .name',
         subtitle_text: '.title .subtitle',
@@ -6527,24 +6762,28 @@ function UI()
         staggerFrom(ui.menu_items, 0.4, {x:50, opacity:0}, 0.1);
     anims.menu_in.restart();
 
-    /*
-    var title_split = new SplitText(app.ui.title_text);
-    anims.title = new TimelineMax({paused:true}).
-        staggerFrom(title_split.chars, 0.4, {y:30, opacity:0}, 0.1);
-    anims.title.restart();
-    */
-
-    anims.title = new TimelineMax({paused:true}).
+    anims.title_in = new TimelineMax({paused:true}).
     to(ui.name_text, 1, {scrambleText:{text:"Hi, I'm Gareth", chars:"lowerCase", revealDelay:0.2}}, 0.0).
     to(ui.subtitle_text, 1.3, {scrambleText:{text:"I make interactive things for the web", chars:"lowerCase", revealDelay:0.2}}, 0.0);
 
-    anims.title.restart();
+    anims.title_out = new TimelineMax({paused:true}).
+    to(ui.title, 0.6, {y:30, opacity:0}, 0.0);
 
     anims.demo = new TimelineMax({paused:true}).
         from(ui.demo_text, 0.4, {x:-100, opacity:0}, 1.5);
-    anims.demo.restart();
 
     return ui;
+}
+
+function ui_show_title()
+{
+    app.anims.title_in.restart();
+    app.anims.demo.restart();
+}
+
+function ui_hide_title()
+{
+    app.anims.title_out.restart();
 }
 var AppState = 
 {
@@ -6552,23 +6791,36 @@ var AppState =
     FLOW: 1,
     WORK: 2,
     MARBLE: 3,
+    AR: 4,
+    AUDIO_VIS: 5,
 };
 
 function init()
 {
-    app.anims = {};
+    app.assets = AssetGroup('common');
+    load_assets(app.assets, 
+    [
+        'assets/common.txt',
+    ],
+    function()
+    {
+        bind_assets(app.assets);
+    });
 
+    app.anims = {};
     app.flow = Flow(512);
     app.work = Work();
     app.ui = UI();
     app.blue_marble = BlueMarble();
-   
-    //app.gl_draw = GL_Draw(12000);
+    app.sound = Sound();
+    //mute_audio();
+    app.audio_vis = AudioVis();
+    app.gl_draw = GL_Draw(12000);
 
-    set_clear_color([0.0,0.0,0.0,1]);
+    set_clear_color([0,0,0,1]);
     clear_screen();
 
-    app.state = AppState.FLOW;
+    app.state = AppState.INIT;
 
     set_viewport(app.view);
     clear_stacks();
@@ -6593,11 +6845,43 @@ function update(t)
     var dt = app.time.dt;
     var ui = app.ui;
 
-    update_work(app.work, dt);
-    update_blue_marble(app.blue_marble, dt);
+    if(app.state === AppState.INIT)
+    {
+        // @TEMP Debug menu
+        /*
+        if(key_down(Keys.ONE))
+        {
+            app.state = AppState.FLOW;
+        }
+        if(key_down(Keys.TWO))
+        {
+            app.state = AppState.MARBLE;
+            show_blue_marble();
+        }
+        if(key_down(Keys.THREE))
+        {
+
+        }
+        if(key_down(Keys.FOUR))
+        {
+            app.state = AppState.AUDIO_VIS;
+            show_audio_vis();
+            app.ui.menu_bar.classList.add('dark');
+        }
+        app.ui.title.style.display = 'none';
+        app.ui.menu_bar.style.display = 'none';
+        */
+        ui_show_title();
+        app.state = AppState.FLOW;
+    }
+    else
+    {
+        update_work(app.work, dt);
+        update_blue_marble(app.blue_marble, dt);
+        update_audio_vis(app.audio_vis, dt);
+    }
 
     render();
-
     update_input();
     clear_stacks();
 }
@@ -6614,6 +6898,11 @@ function render()
         case AppState.MARBLE:
         {
             render_blue_marble(app.blue_marble);
+            break;
+        }
+        case AppState.AUDIO_VIS:
+        {
+            render_audio_vis(app.audio_vis);
             break;
         }
     }

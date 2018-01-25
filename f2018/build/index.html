@@ -17,6 +17,28 @@
 			<p class='demo'>Go ahead, draw something!</p>
 		</div>
 
+		<div class='sc'>
+
+			<div class='sc-track-select'>
+				<input id='sc-url' name='sc-url' type='url', placeholder='Paste a url' list='sc-examples'>
+				<div class='sc-button'>Play</div>
+			</div>
+
+			<div class='sc-player'>
+				<img class='sc-thumbnail'></img>
+				<div class='sc-details'>
+					<h3></h3>
+					<p></p>
+				</div>
+				<img src='img/soundcloud.svg' class='sc-logo'></img>
+			</div>
+
+			<datalist id='sc-examples'>
+				<option value="https://soundcloud.com/forss/lux-aeterna" label="Lux Aeterna"></option>
+			</datalist>
+
+		</div>
+
 		<div class='menu-bar'>
 		<nav class='menu'>
 			<ul>WORK</ul>
@@ -30,6 +52,8 @@
 		<rect x='1' y='1' width='98' height='18' stroke='white'/>
 		<rect class='preloader-bar' x='3' y='3' width='1' height='14' fill='white'></rect>
 	</svg> -->
+
+	<script src="https://connect.soundcloud.com/sdk/sdk-3.3.0.js"></script>
 
 	<script src='js/ScrambleTextPlugin.js'></script>
 	<script src='js/TimelineMax.js'></script>
