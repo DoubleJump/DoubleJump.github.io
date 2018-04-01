@@ -1,6 +1,12 @@
 @font-face 
 {
-    font-family: 'Teko';
+    font-family: 'Teko-Light';
+    src: url('../fonts/Teko/Teko-Light.ttf');
+}
+
+@font-face 
+{
+    font-family: 'Teko-Regular';
     src: url('../fonts/Teko/Teko-Regular.ttf');
 }
 
@@ -8,7 +14,7 @@
 {
     margin: 0;
     padding: 0;
-    font-family: 'Teko';
+    font-family: 'Teko-Light';
     font-weight: 100;
     color: white;
     text-transform: uppercase;
@@ -110,7 +116,7 @@ body
     top: 50%;
     transform: translateY(-50%);
     color: #BFA4FA;
-    font-weight: 400;
+    font-family: 'teko-regular';
     font-size: 7em;
     opacity: 0.24;
     user-select: none;
