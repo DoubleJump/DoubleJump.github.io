@@ -40,7 +40,7 @@ function preload()
 	});
 
 	// SHADERS 
-	load_shader('debug', 'glsl/debug.glsl');
+	load_shader('debug', 'glsl/debug.glsl', {});
 
 	load_shader('matcap', 'glsl/matcap.glsl',
 	{
