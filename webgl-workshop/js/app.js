@@ -15,16 +15,12 @@ var app =
 function preload()
 {
 	app.preloader = document.querySelector('.preloader');
-	
 
 	// MESHES 
-	load_meshes(
-	{
-		casing: 'json/casing.json',
-		pads: 'json/pads.json',
-		speakers: 'json/speakers.json',
-		cap: 'json/cap.json',
-	});
+	load_mesh('casing', 'json/casing.json');
+	load_mesh('pads', 'json/pads.json');
+	load_mesh('speakers', 'json/speakers.json');
+	load_mesh('cap', 'json/cap.json');
 
 	// TEXTURES 
 	load_textures(
@@ -40,8 +36,6 @@ function preload()
 	});
 
 	// SHADERS 
-	load_shader('debug', 'glsl/debug.glsl', {});
-
 	load_shader('matcap', 'glsl/matcap.glsl',
 	{
 		matcap: {value: null },
@@ -64,6 +58,7 @@ function init()
 	app.last_tick = performance.now(); //@todo replace with Threejs clock thingy
 
 	app.input = Input();
+	app.time = new THREE.Clock();
 	app.scene = new THREE.Scene();
 	app.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
 	app.camera.position.set(0,0,1.5);
@@ -190,8 +185,7 @@ function update(t)
 {
 	requestAnimationFrame(update);
 	
-	var dt = (t - app.last_tick) / 1000;
-	app.last_tick = t;
+	var dt = app.time.getDelta();
 
 	if(app.assets_loaded === false) return;
 
@@ -254,6 +248,7 @@ function update(t)
 		spinner.velocity = input.mouse.delta.x * dt;
 	}
 
+	spinner.velocity = clamp(spinner.velocity, -0.5,0.5);
 	spinner.rotation.y += spinner.velocity;
 	spinner.velocity *= 0.91;
 

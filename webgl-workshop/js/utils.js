@@ -1,3 +1,4 @@
+/*
 function hex_to_rgb(hex) 
 {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -9,6 +10,7 @@ function hex_to_rgb(hex)
 
     return new THREE.Vector3(r,g,b);
 }
+*/
 
 THREE.Material.prototype.set = function(name, value)
 {
@@ -34,6 +36,7 @@ function radians(degrees)
 {
 	return degrees * THREE.Math.DEG2RAD;
 }
+
 
 function screen_to_normalized_device(out, screen)
 {
@@ -104,6 +107,7 @@ function load_mesh(name, url)
 	);
 }
 
+/*
 function load_meshes(meshes)
 {
 	for(var m in meshes)
@@ -113,6 +117,7 @@ function load_meshes(meshes)
 		load_mesh(name, url);
 	}
 }
+*/
 
 function load_texture(name, url)
 {
@@ -143,9 +148,9 @@ function load_textures(textures)
 
 function check_assets_loaded()
 {
-	if(app.assets.load_count === 0 && app.init === false)
+	if(app.assets.load_count === 0 && 
+		app.init === false)
 	{
-		//app.preloader.root.style.display = 'none';
 		init();
 	}
 }
