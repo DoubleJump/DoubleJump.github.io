@@ -1,5 +1,6 @@
+//VERTEXSHADER
+
 // attribute vec3 position; -- supplied by THREE
-attribute vec2 uv2;
 
 varying vec3 _normal;
 varying vec2 _uv;
@@ -26,21 +27,19 @@ void main()
 }
 
 
-========
+//FRAGMENTSHADER
 
 varying vec2 _uv;
 varying vec3 _normal;
 varying vec3 _eye;
 
-uniform float hue;
-//uniform vec3 highlight_rgb;
 uniform float highlight;
 uniform sampler2D matcap;
 uniform sampler2D ao;
 
-float fresnel(vec3 E, vec3 N, float bias, float scale, float power)
+float fresnel(vec3 E, vec3 N)
 {
-	return bias + scale * pow(1.0 + dot(E, N), power);
+	return pow(1.0 + dot(E, N), 2.0);
 }
 
 void main() 
@@ -53,7 +52,7 @@ void main()
 	rgb *= ao_sample;
 
 	// Add highlight glow
-	float fr = fresnel(_eye, _normal, 0.0, 1.0, 2.0);
+	float fr = fresnel(_eye, _normal);
 	vec3 highlight_colour = vec3(0.2,0.6,0.9) * highlight * (fr + 0.3);
 	rgb += highlight_colour;
 
