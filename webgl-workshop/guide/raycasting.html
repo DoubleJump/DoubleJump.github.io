@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,16 +24,16 @@
 <article>
 
 	<h1>Raycasting</h1>
-	<img class='hero' src='img/scene.jpg'>
+	<img class='hero' src='img/raycasting.jpg'>
 	<section><div class='content'>
 
 	<p>What do you do if you want to have a hover effect on a 3D model like you would with a 2D button? Well one way is to use something called <strong>raycasting</strong>. This is where you project a 3D line into the world and see if it hits anything. The underlying math for this is a bit tricky but fortunately THREEjs makes it easy. We just need to figure out where to point our ray.</p>
 
 	<h3>Viewport Coordinates</h3>
 
-	<p>Our first job is to convert our mouse screen position into <strong>viewport coordinates</strong>. Viewport is another word for the part of the camera that represents the screen.</p>
+	<p>Our first job is to convert our mouse screen position into <strong>viewport coordinates</strong>. Viewport is another word for the part of the camera that represents the screen. In viewport coordinates <code>[0,0]</code> is the center, <code>[-1,-1]</code> is bottom left and <code>[1,1]</code> top right.</p>
 
-	<div class='placeholder'>VIEWPORT COORDINATES</div>
+	<img src='img/viewport-coords.jpg'></img>
 	<div class='caption'>Viewport Coordinates</div>
 
 	<p>Here's a function that performs that conversion. In short you divide the mouse position by the screen size and shift it around a bit.</p>
@@ -46,7 +49,7 @@
 }</code></pre>
 	<div class='captoion'>&nbsp;</div>
 
-	<p>To perform raycasts you first need to create a raycaster object, set the direction to fire it and then check for any hits.</p> 
+	<p>To perform raycasts you first need to create a <code>Raycaster</code>, set the direction to fire it and then check for any hits.</p> 
 
 <pre><code class="js">function start()
 {
@@ -85,11 +88,24 @@ function update_raycaster()
 }</code></pre>
 <div class='caption'>Setting up the raycaster</div>
 
-	<p>For now we just print the name of the hit part to the console. We'll cover how to make a nice highligh effect in the next part</p>
+	<p>For now we just print the name of the hit part to the console. We'll cover how to make a nice highlight effect in the next part.</p>
 
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

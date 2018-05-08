@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,16 +24,21 @@
 <article>
 
 	<h1>Fake it 'til you make it</h1>
-	<img class='hero' src='img/scene.jpg'>
+	<img class='hero' src='img/fake-it.jpg'>
 	<section><div class='content'>
 
-	<p>Lighting and rendering is a huuuuge topic in 3D but there's one key thing to remember - it's all fake. There have been recent advances in making renderers more physically accurate aka <strong>Physically Based Rendering</strong> but you can often achieve great results with much simpler methods. Websites typically don't have budgets that AAA games have so its important to have some of these tricks up your sleeve.</p>
+	<p>Lighting and rendering is a huuuuge topic in 3D but there's one key thing to remember - it's all fake. There have been recent advances in making renderers more physically accurate aka <strong>Physically Based Rendering</strong> but you can often achieve great results with much simpler methods. Websites typically don't have the same budgets as hi-end games or movies so it's important to have some time saving tricks up your sleeve.</p>
 
 	<h3>Matcaps</h3>
 
 	<p>One such method is 'Material Capture Textures' or <strong>matcaps</strong> for short. They are called such as they capture what a material looks like from a variety of angles and flatten them onto a single image.</p>
 
-	<p>Remember the surface normal we visualised in the previous section? Well instead of directly assigning the output to the normal we can instead use the normal to look up a pixel on our matcap image. Here's how that works.</p>
+	<p>This is great for situations where the lighting environment isn't going to change. As the material is being pre-calculated it's also really perfomant while still looking convincing.</p>
+
+	<img src='img/matcap-lookup.png'>
+	<div class='caption'>Using a surface normal to lookup a matcap texture pixel</div>
+
+	<p>Just like we used the normal vector to output a colour in the shader we can also use that vector to look up a pixel from our matcap. It needs a bit of math first to go from 3D direction to a 2D coordinate. Here's how that works.</p>
 
 	<pre><code class="glsl">//VERTEXSHADER
 
@@ -66,7 +74,7 @@ void main()
 
 	<h3>Loading Textures</h3>
 
-	<p>As our matcap in an image texture we'll need to load it in first before we can use it. We can do that using the built-in <code>TextureLoader</code> class wrapped with a bit of our preloader code as we used with shaders.</p>
+	<p>As our matcap is an image texture it will need to be loaded before use. We can do that using the built-in <code>TextureLoader</code> class wrapped with the same preloader code as we used with shaders.</p>
 
 	<pre><code class='js'>function load_texture(name, url)
 {
@@ -94,12 +102,28 @@ function preload()
 
 	// ...
 }</code></pre>
+	<div class='caption'></div>
+	
+	<p>Once the texture is loaded you can assign it to a material like so...</p>
 
-	<div class='placeholder'>MATCAP DEMO</div>
+	<pre><code class='js'>material.uniforms.matcap.value = textures.matcap_violet;</code></pre>
 
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

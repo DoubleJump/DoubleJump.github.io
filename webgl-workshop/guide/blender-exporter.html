@@ -12,34 +12,47 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
 </header>
-
 <article>
 
 	<h1>Blender Exporter</h1>
-	<img class='hero' src='img/scene.jpg'>
 	<section><div class='content'>
 
-	<p>Now's a good time to move on from our faithful cube and onto something a bit more interesting. We're going to export our headphone parts from Blender.</p>
+	<p>Now's a good time to move on from our faithful cube and onto something more interesting. We're going to export our headphone parts from Blender.</p>
 
 	<h3>Installing the Addon</h3>
 
 	<p>One (of the many) ways to get meshes into THREEjs is to use the exporter addon for Blender. This isn't included by default so you'll need to follow the steps below to install it.</p>
 
-	<div class='placeholder'>INSTALL STEPS</div>
-	<div class='caption'>Viewport Coordinates</div>
+	<ul>
+		<li>Open Blender</li>
+		<li>Go to File > User Preferences. Click on the 'addons' tab</li>
+		<li>Click 'Install from file...'</li>
+		<li>Navigate to the project folder and select <code>io_three.zip</code></li>
+	</ul>
+
+	<img src='img/blender-addon.jpg'>
+	<div class='caption'>Installing the Blender exporter</div>
 
 
 	<h3>Exporting Meshes</h3>
 
-	<p>With that out of the way go ahead and open <code>headphones.blend</code>. You'll notice the model is built out of separate parts. We're going to export each of parts separately like in the video below.</p>
+	<p>With that out of the way go ahead and open <code>headphones.blend</code>. You'll notice the model is built out of separate parts. We're going to export each of these its own file by right clicking to select and going to File > Export > ThreeJS(JSON). </p>
 
-	<div class='placeholder'>EXPORT STEPS</div>
-	<div class='caption'>Exporting a mesh from Blender</div>
+	<img src='img/blender-export.jpg'>
+	<div class='caption'>Find the exporter in the Blender file menu</div>
+
+	<p>Be sure to use the same <code>GEOMETRY</code> settings as in the screenshot below.</p>
+
+	<img src='img/part-files.jpg'>
+	<div class='caption'>Exporting parts as JSON files</div>
 
 	<h3>Importing Meshes</h3>
 
@@ -78,6 +91,19 @@ function preload()
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,7 +24,6 @@
 <article>
 
 	<h1>Input &amp; Interaction</h1>
-	<img class='hero' src='img/scene.jpg'>
 	<section><div class='content'>
 
 	<p>Up until this point we've been drawing a static box, which is kinda boring. Let's start adding some movement.</p>
@@ -58,10 +60,10 @@
 
 	<h3>Spinning the Cube</h3>
 
-	<p>Now we have access to some input lets make it so we can spin the cube by clicking and dragging on the page. <code>Delta</code> is another, shorter way of saying 'change' so <code>mouse.delta.x</code> is how far the mouse has moved horizontally. <code>dt</code> is a common shorthand for 'delta time' or the amount of time that has passed since the last update loop and is calculated by THREEjs' clock. We multiply our mouse movement by this value to smooth out minor differences in frame rate.</p>
+	<p>Now we have access to some input let's make it so we can spin the cube by clicking and dragging on the page. <code>Delta</code> is another, shorter way of saying 'change' so <code>mouse.delta.x</code> is how far the mouse has moved horizontally. <code>dt</code> is a common shorthand for 'delta time', or the amount of time that has passed since the last update loop and is calculated by THREEjs' clock. We multiply our mouse movement by this value to smooth out minor differences in frame rate.</p>
 
 	<pre><code class="js">// If we are dragging set the spin speed
-// to amount og horizontal mouse movement
+// to amount of horizontal mouse movement
 if(key_held(Keys.MOUSE_LEFT))
 	cube.spin_speed = input.mouse.delta.x * dt;
 
@@ -73,6 +75,19 @@ cube.spin_speed *= 0.91;</code></pre>
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

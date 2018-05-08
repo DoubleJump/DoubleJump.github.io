@@ -28,21 +28,28 @@ header
     display: flex;
     z-index: 99;
     background: #efefef;
-    /*visibility: hidden;*/
     color: #576581;
+    transition: transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-header.open
+header.closed
 {
-    visibility: visible;
+    transform: translateX(-180px);
+}
+header.closed nav
+{
+    opacity: 0;
 }
 
 header h3
 {
     font-size: 16px;
-
 }
 
+nav
+{
+    transition: opacity 0.3s;
+}
 nav a
 {
     text-decoration: none;
@@ -66,9 +73,18 @@ nav a:hover
     color: black;
 }
 
-header.hidden
+.menu-icon
 {
-    visibility: hidden;
+    position: absolute;
+    width: 20px;
+    right: 20px;
+    fill: #576581;
+    top: 25px;
+    cursor: pointer;
+}
+.menu-icon:hover
+{
+    fill: black;
 }
 
 .menu
@@ -155,7 +171,7 @@ section
     border: none;
 }
 
-img
+img,video
 {
     width: 100%;
     display: block;
@@ -165,7 +181,7 @@ img
 {
     font-size: 0.8em;
     font-weight: 500;
-    color: rgba(0,0,0,0.4);
+    color: rgba(0,0,0,0.85);
     margin-bottom: 2em;
 }
 
@@ -267,6 +283,8 @@ footer .content
 {
     border-top: 2px solid black;
     padding-top: 2.0em;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .paginator
@@ -274,9 +292,12 @@ footer .content
     display: inline-block;
     text-transform: uppercase;
     font-size: 0.7em;
-    letter-spacing: 3px;
     line-height: 1.4em;
-    max-width: 100px;
+    cursor: pointer;
+}
+.paginator:hover
+{
+    opacity: 0.5;
 }
 
 .paginator.left
@@ -287,6 +308,13 @@ footer .content
 .paginator.right
 {
     position: absolute;
-    right: 1em;
+    right: 0;
     text-align: right;
+}
+
+.paginator .label
+{
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 1.0rem;
 }

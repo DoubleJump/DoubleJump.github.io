@@ -5,11 +5,6 @@ function clamp(a, min, max)
 	else return a;
 }
 
-function radians(degrees)
-{
-	return degrees * THREE.Math.DEG2RAD;
-}
-
 function screen_to_viewport(screen)
 {
 	var width = app.renderer.domElement.width;

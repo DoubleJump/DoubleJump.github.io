@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -24,7 +27,7 @@
 	<img class='hero' src='img/uv-mapping.jpg'>
 	<section><div class='content'>
 
-	<p>UV mapping is the processes of creating a 2D map of a 3D surface kind of like peeling an orange and laying it flat on a table. UV coordinates are stored as an attribute just like normals. Our headphones model has UV maps included so we don't need to do anything extra except update our shader to use them.</p>
+	<p>UV mapping is the processes of creating a 2D map of a 3D surface. Similar to peeling an orange and laying it flat on a table. UV coordinates are stored as an attribute, just like normals. Our headphones model has UV maps included so we don't need to do anything extra except update our shader to use them.</p>
 
 <pre><code class="glsl">//VERTEXSHADER
 
@@ -67,8 +70,7 @@ function start()
 }</code></pre>
 <div class='caption'>Loading and assigning the ambient occlusion texture</div>
 
-	<p>Here's the updated fragment shader. The ambient occlusion map is a black and white image with all RGB channel having equal values. By multiplying the matcap colour by the ambient occlusion colour we'll darken the result wherever there is shadow.</p>
-
+	<p>Here's the updated fragment shader. The ambient occlusion map is a black and white image with all RGB channels having equal values. By multiplying the matcap colour by the ambient occlusion colour we'll darken the result wherever there is shadow.</p>
 
 	<pre><code class="glsl">//FRAGMENTSHADER
 
@@ -94,6 +96,19 @@ void main()
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,10 +24,10 @@
 <article>
 
 	<h1>Fresnel</h1>
-	<img class='hero' src='img/scene.jpg'>
+	<img class='hero' src='img/fresnel.jpg'>
 	<section><div class='content'>
 
-	<p>To create our highlight effect we are going to use something called <strong>Fresnel</strong>. Simply put Fresnel is the angle between the surface normal and the camera direction. If a face is pointing directly towards the camera the Fresnel value will be <code>1.0</code>. A face that is at right-angles to the camera will have a Fresnel of <code>0.0</code>. We can add an overlay colour to the output of fragment shader and scale its brightness by the Fresnel value give and 'edge-glow' sort of effect. Fresnel is also used in many other lighting techniques.</p>
+	<p>To create our highlight effect we are going to use something called <strong>Fresnel</strong>. Fresnel is the angle between the surface and the view/camera. If a face is pointing directly towards the camera the Fresnel value will be <code>0.0</code>. A face that is at right-angles to the camera will have a Fresnel of <code>1.0</code>. We can use this value to control the amount of highlight overlay colour.</p>
 
 	<pre><code class="glsl">float fresnel(vec3 E, vec3 N)
 {
@@ -32,11 +35,11 @@
 }</pre></code>
 	<div class='caption'>The Fresnel function in GLSL</div>
 
-	<p><code>N</code> is our normal. <code>E</code> stands for 'eye' which is often used as the term for the direction of a face to the center of the camera. The built in <code>dot(E, N)</code> function will return the angle of between those two directions.</p> 
+	<p><code>N</code> is our normal. <code>E</code> stands for 'eye' which is often term for the direction of a face to the center of the camera. The built in <code>dot(E, N)</code> function will return the angle of between those two directions.</p> 
 
 	<h3>Getting the Eye Direction</h3>
 
-	<div class='placeholder'>EYE DIRECTION</div>
+	<img src='img/eye-direction.jpg'></img>
 	<div class='caption'>The 'eye' direction</div>
 
 	<p>You get eye vector by applying the model and view transform (but not the projection) and then normalizing the result. Normalizing a vector keeps its direction but ensures its length is always equal to 1.</p>
@@ -78,10 +81,51 @@ void main()
 }</code></pre>
 <div class='caption'>&nbsp;</div>
 
+	<p>We can now update our raycasting code the use the <code>highlight</code> uniform and switch the effect on and off as needed.</p>
+
+	<pre><code class="js">function update_raycaster()
+{
+	//...
+
+	// First reset the highlight effect on all the headphone parts
+	for(var i = 0; i < components.length; ++i)
+	{
+		var child = components[i];
+		if(child.material.uniforms.highlight)
+			child.material.uniforms.highlight.value = 0.0;
+	}
+
+	var viewport = screen_to_viewport(input.mouse.position);
+	app.raycaster.setFromCamera(viewport, camera);
+
+	var intersects = app.raycaster.intersectObjects(components, true);
+	if(intersects.length > 0)
+	{
+		var hit = intersects[0];
+
+		if(hit.object.material.uniforms.highlight)
+			hit.object.material.uniforms.highlight.value = 1.0;
+	}
+}</code></pre>
+<div class='caption'>Updating the raycast code with the highlight effect</div>
+
 
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

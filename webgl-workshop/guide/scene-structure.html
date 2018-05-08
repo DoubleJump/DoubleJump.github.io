@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -34,7 +37,7 @@
 
 	<p>A mesh is collection of 3D points (x,y and z values) that are grouped by threes to form visible triangles.</p>
 
-	<div class='placeholder'>MESH DIAGRAM</div>
+	<video autoplay loop src='img/mesh.mp4'></video>
 
 	</div></section>
 
@@ -44,7 +47,7 @@
 
 	<p>A transform is the position, scale and rotation of an object. By modifiying the values of the transform you can move the mesh around in 3D space.</p>
 
-	<div class='placeholder'>TRANSFORM DIAGRAM</div>
+	<video autoplay loop src='img/transform.mp4'></video>
 
 	</div></section>
 
@@ -54,7 +57,7 @@
 
 	<p>A camera is special type of transform that instead of moving a mesh  moves the entire scene. The camera can also distort the scene to give the illusion of perspective.</p>
 
-	<div class='placeholder'>CAMERA DIAGRAM</div>
+	<video autoplay loop src='img/camera.mp4'></video>
 
 	</div></section>
 
@@ -124,6 +127,19 @@ function update(t)
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

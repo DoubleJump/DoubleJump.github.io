@@ -8,24 +8,27 @@ var guide_urls =
 	'Render Pipeline': 'render-pipeline',
 	'Loading Assets': 'loading-assets',
 	'Meshes': 'meshes',
-	"Fake it 'til you make it": 'fake-it-till-you-make-it',
 	'Input & Interaction': 'input-and-interaction',
 	'Blender Exporter': 'blender-exporter',
+	"Fake it 'til you make it": 'fake-it-till-you-make-it',
 	'Groups & Parenting': 'groups-and-parenting',
 	'UV Mapping': 'uv-mapping',
 	'Raycasting': 'raycasting',
 	'Fresnel': 'fresnel',
-	'Animation': 'animation',
+	'Animations': 'animation',
 };
 
 function init()
 {
 	document.querySelector('title').innerText = 'Practical 3D for Websites';
 
-	//var menu = document.querySelector('.menu');
+	var menu_icon = document.querySelector('.menu-icon');
 	var header = document.querySelector('header');
 	var nav = document.querySelector('nav');
 	var h1 = document.querySelector('h1');
+	var prev = document.querySelector('.paginator.left .label');
+	var next = document.querySelector('.paginator.right .label');
+	var keys = Object.keys(guide_urls);
 
 	var i = 0;
 	for(var k in guide_urls)
@@ -43,34 +46,61 @@ function init()
 		i++;
 	}
 
-	// menu.addEventListener('click', function()
-	// {
-	// 	header.classList.toggle('open');
-	// });
+	if(guide_index > 0)
+	{
+		prev.innerText = keys[guide_index-1];
+	}
+	else
+	{
+		document.querySelector('.paginator.left').style.display = 'none';
+	}
+
+	if(guide_index < keys.length-1)
+	{
+		next.innerText = keys[guide_index+1];
+	}
+	else
+	{
+		console.log('last')
+		document.querySelector('.paginator.right').style.display = 'none';
+	}
+
+	menu_icon.addEventListener('click', function()
+	{
+	 	header.classList.toggle('closed');
+	});
+
+	prev.addEventListener('click', function()
+	{
+		if(guide_index === 0) return;
+		var dst = guide_index - 1;
+		window.location.href = guide_urls[keys[dst]] + '.html';
+	})
+
+	next.addEventListener('click', function()
+	{
+		if(guide_urls.length - 1 === 0) return;
+		var dst = guide_index + 1;
+		window.location.href = guide_urls[keys[dst]] + '.html';
+	});
 
 	window.addEventListener('keydown', function(e)
 	{
 		var code = e.keyCode;
-		var dst;
 		if(code === 37)
 		{
 			if(guide_index === 0) return;
-			dst = guide_index - 1;
+			var dst = guide_index - 1;
+			window.location.href = guide_urls[keys[dst]] + '.html';
 		}
 		if(code === 39)
 		{
 			if(guide_urls.length - 1 === 0) return;
-			dst = guide_index + 1;
+			var dst = guide_index + 1;
+			window.location.href = guide_urls[keys[dst]] + '.html';
 		}
-
-		var keys = Object.keys(guide_urls);
-		//window.url = guide_urls[keys[dst]] + '.html';
 	});
 
-	window.addEventListener('keydown', function()
-	{
-		document.querySelector('header').classList.toggle('hidden');
-	})
 }
 
 window.addEventListener('load', init);

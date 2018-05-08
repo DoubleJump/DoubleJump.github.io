@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -94,11 +97,19 @@ void main()
 
 	<h3>Creating Materials</h3>	
 
-	<p>THREEjs comes with preset materials like the <code>MeshBasicMaterial</code> we've already used. It's also possible  to create custom materials using <code>ShaderMaterial</code> like so.</p>
+	<p>THREEjs comes with preset materials like the <code>MeshBasicMaterial</code> we've already used. It's also possible to create custom materials using <code>ShaderMaterial</code> like so.</p>
 
-	<pre><code class="js">
-var vertex_shader = "void main() {vec4 p = vec4(position, 1.0); p = projectionMatrix * modelViewMatrix * p; gl_Position = p; };"
-var fragment_shader = "void main() {gl_FragColor = vec4(1.0); }";
+	<pre><code class="js">var vertex_shader = `void main() 
+{
+	vec4 p = vec4(position, 1.0); 
+	p = projectionMatrix * modelViewMatrix * p; 
+	gl_Position = p; 
+};`
+
+var fragment_shader = `void main() 
+{
+	gl_FragColor = vec4(1.0); 
+}`;
 
 var material = new THREE.ShaderMaterial(
 {
@@ -114,6 +125,18 @@ var material = new THREE.ShaderMaterial(
 
 </article>
 
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

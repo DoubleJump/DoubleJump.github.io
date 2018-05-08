@@ -13,7 +13,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -22,10 +25,9 @@
 <article>
 
 	<h1>Animations</h1>
-	<img class='hero' src='img/scene.jpg'>
 	<section><div class='content'>
 
-	<p>It's time to add some final bits of animation polish. We'll be using the excellent <strong>GSAP</strong> library for this. At its core GSAP just animates numbers whether that's a dom element or THREEjs position.</p>
+	<p>It's time to add some final bits of animation polish. We'll be using the excellent <strong>GSAP</strong> library for this. At its core GSAP just animates numbers whether that's a CSS property or a THREEjs position.</p>
 
 	<h3>Timelines</h3>
 
@@ -38,7 +40,7 @@
 	app.animations.intro = new TimelineMax({paused:true}).
 		from('.angle', 1.6, {x:1200}, 1.0).
 		fromTo(app.spinner.scale, 1.0, {x:0.0001, y:0.0001, z:0.0001}, {x:1, y:1, z:1}, 1.4).
-		fromTo(app.spinner.rotation, 1.8, {y:0}, {y:radians(720)}, 1.4).
+		fromTo(app.spinner.rotation, 1.8, {y:0}, {y:720 * THREE.DEG2RAD}, 1.4).
 		from('.background h2', 0.5, {opacity:0}, 2.0).
 		from('.burger', 0.5, {x:-50, opacity:0}, 2.3).
 		from('.colour-picker', 0.5, {x:-50, opacity:0}, 2.3).
@@ -51,11 +53,24 @@
 }</pre></code>
 	<div class='caption'>Building up an intro animation using GSAP timelines</div>
 
-	<p>A couple of things to note, when animating a THREEjs scale value don't forget to scale all three axes (x,y,z). You can also set the animation to be paused intially so it doesn't start running straight away. Instead you set it going by calling the timelines's <code>restart()</code> function.</p> 
+	<p>A couple of things to note. When animating a THREEjs scale value don't forget to scale all three axes (x,y,z). We also animate from <code>0.0001</code> rather than zero to avoid weird math errors cropping up. Adding <code>{paused:true}</code> to the constructor lets us control when the animation fires manually by calling the timelines's <code>restart()</code> function.</p> 
 
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

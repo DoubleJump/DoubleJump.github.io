@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,7 +24,7 @@
 <article>
 
 	<h1>Groups &amp; Parenting</h1>
-	<img class='hero' src='img/scene.jpg'>
+	<img class='hero' src='img/grouping.jpg'>
 	<section><div class='content'>
 
 	<p>Although we want our headphones to be rendered as separate parts we still want to rotate it as a single object. To do that we'll use <strong>Groups</strong>.</p>
@@ -29,11 +32,6 @@
 	<h3>Parenting</h3>
 
 	<p>Under the hood a group is just another transform. When you mutliply one transform matrix with another you pass along its properties. The first transform is called the <strong>parent</strong> and second is called the <strong>child</strong>. One parent can have mutiple children.</p>
-
-	<h3>Group Heirarchy</h3>
-
-	<div class='placeholder'>GROUP HIERARCHY</div>
-	<div class='caption'>Our grouping sructure</div>
 
 	<p>We're actually going to use two groups. One will tilt the headphones backwards at a more interesting angle. The second will control the drag based spinning.</p>
 
@@ -47,7 +45,9 @@
 
 	var headphones = new THREE.Group();
 	// tilt the headphones backwards
-	headphones.rotation.x = radians(15);
+	// threejs angle values need to be converted
+	// from degrees to radians
+	headphones.rotation.x = 15 * THREE.Math.DEG2RAD;
 	app.headphones = headphones;
 
 	var casing = new THREE.Mesh(meshes.casing, materials.matcap);
@@ -65,18 +65,22 @@
 }</code></pre>
 <div class='caption'>Coding our group structure</div>
 
-	<h3>Radians?</h3>
-
-	<p>People are used to thinking about rotations in degrees but for some reason THREEjs has decided to store them as radians. This is kind of lame and we have to convert the value first -___-</p>
-
-	<pre><code class="js">function radians(degrees)
-{
-	return degrees * THREE.Math.DEG2RAD;
-}</code></pre>
-
 	</div></section>
 
 </article>
+
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

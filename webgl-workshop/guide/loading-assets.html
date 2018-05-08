@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -21,10 +24,9 @@
 <article>
 
 	<h1>Loading Assets</h1>
-	<img class='hero' src='img/scene.jpg'>
 	<section><div class='content'>
 
-	<p>THREEjs has a bunch of different helper functions for loading different types of assets. We still need to do bit of work however as network requests are <strong>asynchronous</strong>. We need to makes sure all our assets have loaded before we render anything otherwise WebGL will get mad at us an complain :( </p>
+	<p>THREEjs has a bunch of different helper functions for loading different types of assets. We still need to do bit of work however as network requests are <strong>asynchronous</strong>. We need to makes sure all our assets have loaded before we render anything otherwise WebGL will get mad at us and complain 😒 </p>
 
 	</div></section>
 
@@ -32,9 +34,9 @@
 
 	<h3>Preloader</h3>
 
-	<p>Our preloader works by incrementing a counter whenever we load an asset. Once loaded the counter is decremented and <code>check_is_loaded()</code> called. This function checks the counter and if it's zero runs <code>start()</code>.</p>
+	<p>Our preloader works by incrementing a counter whenever we load an asset. Once loaded, the counter is decremented and <code>check_is_loaded()</code> called. This function checks the counter and if it's zero runs <code>start()</code>.</p>
 
-	<p>Here's how our shader loading code looks now. Shaders come in two parts, but it's often convinient to write them together in the same file. By including a comment at the start of each shader we can search and split the text to get our two peices. Finally, once the asset is loaded, we store it in a object called <code>assets</code> for easy access later on.</p>
+	<p>Here's how our shader loading code looks now. Shaders come in two parts, but it's often convinient to write them together in the same file. By including a comment at the start of each shader we can search and split the text to get our two pieces. Finally, once the asset is loaded, we store it in a object called <code>assets</code> for easy access later on.</p>
 
 	<pre><code class="js">function load_shader(name, url, uniforms)
 {
@@ -76,7 +78,7 @@ function check_assets_loaded()
 }</code></pre>
 <div class='caption'>Updated shader loading code</div>
 
-	<p>Here's our custom shader in its full easy to edit glory. Save it somewhere in your project folder.</p>
+	<p>Here's our custom shader in its full, easy to edit glory. Save it somewhere in your project folder.</p>
 
 <pre><code class="glsl">//VERTEX SHADER
 void main()
@@ -108,6 +110,18 @@ window.addEventListener('load', preload);</code></pre>
 
 </article>
 
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>

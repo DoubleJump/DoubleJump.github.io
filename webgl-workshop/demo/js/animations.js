@@ -5,7 +5,7 @@ function build_animations()
 	app.animations.intro = new TimelineMax({paused:true}).
 		from('.angle', 1.6, {x:1200}, 1.0).
 		fromTo(app.spinner.scale, 1.0, {x:0.0001, y:0.0001, z:0.0001}, {x:1, y:1, z:1}, 1.4).
-		fromTo(app.spinner.rotation, 1.8, {y:0}, {y:radians(720)}, 1.4).
+		fromTo(app.spinner.rotation, 1.8, {y:0}, {y:720 * THREE.DEG2RAD}, 1.4).
 		from('.background h2', 0.5, {opacity:0}, 2.0).
 		from('.burger', 0.5, {x:-50, opacity:0}, 2.3).
 		from('.colour-picker', 0.5, {x:-50, opacity:0}, 2.3).
@@ -17,7 +17,7 @@ function build_animations()
 		}}, 0.0);
 
 
-	var spin = '+=' + radians(540);
+	var spin = '+=' + (540 * THREE.DEG2RAD);
 
 	app.animations.colour_switch = new TimelineMax({paused:true}).
 		to(app.spinner.rotation, 1.6, {y:spin, ease: Power4.easeOut}, 0.0).

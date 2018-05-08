@@ -88,7 +88,7 @@ function start()
 
 	var headphones = new THREE.Group();
 	app.headphones = headphones;
-	headphones.rotation.x = radians(15);
+	headphones.rotation.x = 15 * THREE.Math.DEG2RAD;
 
 	// Casing
 
@@ -142,7 +142,7 @@ function start()
 	materials.shadow.uniforms.shadow.value = textures.shadow;
 	var shadow = new THREE.Mesh(shadow_mesh, materials.shadow);
 	shadow.position.y = -0.7;
-	shadow.rotation.x = radians(-90);
+	shadow.rotation.x = -90 * THREE.Math.DEG2RAD;
 	spinner.add(shadow);
 
 	// Raycaster [Guide link to raycasting]

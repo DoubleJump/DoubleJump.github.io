@@ -12,7 +12,10 @@
 
 <body>
 
-<header>
+<header class='closed'>
+	<svg class='menu-icon' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+	  <path d="M0,3V0H3V3ZM0,9V6.05H3V9Zm0,6.05V12H3v3ZM6,0H27V3H6ZM6,9V6.05H27V9Zm0,6.05V12H27v3Z"/>
+	</svg>
 	<nav>
 		<h3>Sections</h3>
 	</nav>
@@ -26,10 +29,10 @@
 
 	<h3>Mesh Attributes</h3>
 
-	<p>The vertices of a mesh can store additional information besides just their position. We can store whatever data we wish in fact. These bits of vertex information are called <strong>attributes</strong>. One attribute that's very useful to include is the direction a triangle that the vertex belongs to is facing. This is called a <strong>surface normal</strong>.</p>
+	<p>The vertices of a mesh can store additional information besides position. We can store whatever data we wish in fact. These bits of vertex information are called <strong>attributes</strong>. One attribute that's very useful to include is the direction a triangle that the vertex belongs to is facing. This is called a <strong>surface normal</strong>.</p>
 
-	<img class='placeholder'>
-	<div class='caption'>Surface normal</div>
+	<img src='img/blender-normals.jpg'>
+	<div class='caption'>Blue lines showing surface normals in Blender</div>
 
 	</div></section>
 
@@ -39,7 +42,7 @@
 
 	<p>We can get a feel for how normals work by visualising them in our shader. Normals are stored as XYZ <code>vec3</code> values the same as positions.</p>
 
-	<p>To a shader a XYZ directions and RGB colours are the same thing. We can easily assign the direction as a colour. The only thing we have to do is take into account that directions can have negative values <code>vec3(-1.0,-1.0,0.0)</code> whereas colours only have positive values.</p>
+	<p>To a shader a XYZ directions and RGB colours are the same thing. We can easily assign the direction as a colour. The only thing we have to do is take into account that directions can have negative values e.g <code>vec3(-1.0,-1.0,0.0)</code> whereas colours only have positive values.</p>
 
 	<pre><code class="glsl">//VERTEXSHADER
 
@@ -49,7 +52,8 @@ varying vec3 _normal;
 
 void main()
 { 
-	// normals have to be multiplied by their own special matrix
+	// normals have to be multiplied by their own special 
+	// 'normalMatrix' which is supplied by THREEjs
 	_normal = normalMatrix * normal;
 	gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
@@ -68,14 +72,27 @@ void main()
 }</code></pre>
 <div class='caption'>Updated shader loading code</div>
 
-	<p>All being well you should see something that looks the below example.</p>
+	<p>All being well you should see something that looks like the below example.</p>
 
-	<div class='placeholder'>IFRAME NORMAL RENDERER</div>
+	<img src='img/cube-normals.jpg'>
+	<div class='caption'>Surface normal</div>
 
 	</div></section>
 
 </article>
 
+<footer>
+	<div class='content'>
+	<div class='paginator left'>
+		Prev:
+		<div class='label'></div>
+	</div>
+	<div class='paginator right'>
+		Next:
+		<div class='label'></div>
+	</div>
+	</div>
+</footer>
 
 <script src="js/highlight.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
