@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'/>
+	<title>Gareth Battensby | Digital Designer</title>
+	<meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'/>
+	<meta name='description' content='Portfolio of Gareth Battensby who makes interactive things for the web.'>
+	<meta property='og:title' content='Gareth Battensby | Digital Designer'>
+	<meta property='og:url' content='https://doublejump.github.io/site/'>
+	<meta property='og:type' content='website'>
+	<meta property='og:image:type' content='image/jpg'>
+	<meta property='og:image' content='https://doublejump.github.io/site/img/meta-image.jpg'>
+	<meta property='og:image:width' content='2400'>
+	<meta property='og:image:height' content='1260'>
+	<meta property='og:site_name' content='Gareth Battensby'>
+	<meta property='author' content='Gareth Battensby'>
+
+	<link rel="icon" type="image/png" href="img/favicon-196x196.png" sizes="196x196" />
+	<link rel="icon" type="image/png" href="img/favicon-96x96.png" sizes="96x96" />
+	<link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32" />
+	<link rel="icon" type="image/png" href="img/favicon-16x16.png" sizes="16x16" />
+	<link rel="icon" type="image/png" href="img/favicon-128.png" sizes="128x128" />
+
+	<style type='text/css'>
+
+		*
+		{
+		  margin: 0;
+		  padding: 0;
+
+		  text-decoration: none;
+		  text-transform: uppercase;
+		  box-sizing: border-box;
+		  line-height: 1;
+		  font-weight: 100;
+		}
+
+		:root
+		{
+		  --work-item-size: 90vh;
+		  --grey: #4D4D4D;
+		  --border: 4vw;
+		  --ease: cubic-bezier(0.2,0,0.2,1);
+		}
+
+		body, html
+		{
+		    background: black;
+		    height: 100%;
+		    color: white;
+		    font-family: 'title-regular';
+		    font-size: 16px;
+		    overflow-x: hidden;
+		    /*font-size: 1.8vw;*/
+		}
+
+		.wrapper { position: absolute; }
+		.np { pointer-events: none; }
+		.tr { position: fixed; top: var(--border); right: var(--border);}
+		.tl { position: fixed; top: var(--border); left: var(--border);}
+		.bl { position: fixed; bottom: var(--border); left: var(--border);}
+		.br { position: fixed; bottom: var(--border); right: var(--border);}
+
+		.dummy-scroll
+		{
+			position: absolute;
+			top: 0; left: 0;
+			width: 100vw;
+			height: 101vh;
+		}
+
+		.ffs
+		{
+			position: fixed;
+			top: 0; left:0;
+			width: 100vw; height: 100vh;
+		}
+
+		.ns
+		{
+		  user-select: none;
+		  -moz-user-select: none;
+		  -webkit-user-select: none;
+		}
+
+		.fc
+		{
+		  display: flex;
+		  justify-content: center;
+		  align-items: center;
+		}
+
+		.load-icon
+		{
+		  width: 30vw;
+		}
+
+		.load-bar .back {opacity: 0.2; }
+
+		@keyframes crawl
+		{
+			0% {stroke-dashoffset: 178; }
+			50% {stroke-dashoffset: 0; }
+			100% {stroke-dashoffset: -178; }
+		}
+
+		.load-bar .front
+		{
+			stroke-dasharray: 178;
+			animation: crawl;
+			animation-iteration-count: infinite;
+			animation-duration: 3.0s;
+			animation-timing-function: cubic-bezier(0.2,0,0.6,1);
+		}
+
+		.oops
+		{
+			visibility: hidden;
+			position: fixed;
+			top: 50%; left: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+	</style>
+	<link rel='stylesheet' href='style.css' type='text/css'>
+
+</head>
+<body>
+
+	<noscript><style type="text/css">.oops{ visibility: hidden; }</style></noscript>
+
+	<div class='dummy-scroll'></div>
+	<main class='wrapper'>
+
+		<p class='oops np ns'>Wasn't able to load WebGL, sorry!</p>
+
+		<div class='articles-container ffs' style='visibility:hidden'>
+
+			<div class='heading article-heading'>
+				<p>02</p>
+				<h2>ARTICLES</h2>
+				<div class='mask'></div>
+			</div>
+
+			<div class='content-grid'>
+				<div class='article-item'>
+					<div class='title'>
+						<a href='https://www.doublejump.github.io/webgl-with-webassembly'><h3>WebGL With Webassembly</h3></a>
+						<h4>September 2017</h4>
+					</div>
+					<p>Wrote just after the release of Webassembly on major browsers. Explains how to get a WebGL scene up and running in C++ without any external dependencies.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+				<div class='article-item'>
+					<div class='title'>
+						<a href='https://www.doublejump.github.io/webgl-with-webassembly'><h3>Practical 3D for the Web</h3></a>
+						<h4>July 2018</h4>
+					</div>
+					<p>The guide written for my THREEJS workshop which covers 3D experiences for websites built with smaller budgets.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+				<div class='article-item'>
+					<div class='title'>
+						<a href='https://www.doublejump.github.io/webgl-performance-tips'><h3>WebGL Perf Guide</h3></a>
+						<h4>September 2018</h4>
+					</div>
+					<p>Quick wins for avoiding common performance pitfalls in WebGL.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+			</div>
+		</div>
+
+		<div class='code-container ffs' style='visibility:hidden'>
+
+			<div class='heading code-heading'>
+				<p>03</p>
+				<h2>CODE</h2>
+				<div class='mask'></div>
+			</div>
+
+			<div class='content-grid'>
+				<div class='code-item'>
+					<a href='https://github.com/DoubleJump/pfx'><h3>PFX</h3></a>
+					<p>Tiny JS library for rapidly adding WebGL shader effects to websites.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+				<div class='code-item'>
+					<a href='https://github.com/DoubleJump/svg-animation-tools'><h3>SVG Animation Tools</h3></a>
+					<p>A post processor for SVGs exported from Adobe Illustrator. Especially useful for animation and interactions.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+				<div class='code-item'>
+					<a href='https://github.com/DoubleJump/gblib'><h3>WebGL Engine</h3></a>
+					<p>My home-grown, dependency free WebGL engine that powers this site and several others.</p>
+					<svg class='marker-arrow' viewBox="0 0 50 50">
+					  <path d="M17.5,16.39l16,8.46-16,8.45Z"/>
+					</svg>
+				</div>
+			</div>
+		</div>
+
+		<div class='work-container' style='visibility: hidden; overflow-y:hidden'>
+			<div class='work-grid'>
+				<div class='work-item'>
+					<div class='work-image button'></div>
+					<div class='work-text'>
+						<div class='title'>
+							<h3>Blue Marble</h3>
+							<h4>WebGL Earth Visualisation</h4>
+						</div>
+						<p class='description'>Realistic globe rendering with day/night transition and atmospheric scattering.</p>
+					</div>
+					<p class='index'>01</p>
+				</div>
+				<div class='work-item'>
+					<div class='work-image button'></div>
+					<div class='work-text'>
+						<div class='title'>
+							<h3>Flow Field</h3>
+							<h4>Particle Simulation</h4>
+						</div>
+						<p class='description'>An interactive WebGL particle simluation using vector fields.</p>
+					</div>
+					<p class='index'>02</p>
+				</div>
+				<div class='work-item'>
+					<div class='work-image button'></div>
+					<div class='work-text'>
+						<div class='title'>
+							<h3>Paris Cafe</h3>
+							<h4>Blender3D Scene</h4>
+						</div>
+						<p class='description'>Illustration of Haussmann style Parisian cafe used to test Blender's new realtime renderer Eevee.</p>
+					</div>
+					<p class='index'>03</p>
+				</div>
+				<div class='work-item'>
+					<div class='work-image button'></div>
+					<div class='work-text'>
+						<div class='title'>
+							<h3>Headphones</h3>
+							<h4>Product Viewer Demo</h4>
+						</div>
+						<p class='description'>Scene created for my workshop Practical 3D for the Web designed to demonstrate simple, performant render techniques for mobile devices.</p>
+					</div>
+					<p class='index'>04</p>
+				</div>
+			</div>
+
+			<div class='heading work-heading'>
+				<p>01</p>
+				<h2>WORK</h2>
+			</div>
+
+			<div class='scroll-bar'>
+				<svg viewBox="0 0 17 126">
+				    <path class="bar" d="M-.06.25,15.53,15.84-.06,31.44l15.59,16L-.06,63.41,15.53,79-.06,94.53l15.59,16.06L-.06,126.19"/>
+				    <path class="marker" d="M-.06.25,15.53,15.84-.06,31.44l15.59,16L-.06,63.41,15.53,79-.06,94.53l15.59,16.06L-.06,126.19"/>
+				</svg>
+			</div>
+
+			<a href='mailto:gareth.battensby@gmail.com' class='contact button bl'>
+				<svg viewBox="0 0 58 50">
+				  <polygon points="0 -8 0 50 58 50 58 -8 58 -66 0 -8"/>
+				  <path d="M8.5,9.5v31h41V9.5Zm39,1L29,24.38,10.5,10.5Zm-38,29V11L29,25.63,48.5,11V39.5Z"/>
+				</svg>
+			</a>
+
+		</div>
+
+		<div class='hp-container ffs' style='visibility:hidden'>
+			<div class='hp-background fc abs np ns'>
+				<svg class='hp-angle abs' xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080" preserveAspectRatio='none'>
+				  <defs>
+				    <linearGradient id="angle-gradient" x1="2274.34" y1="1239.37" x2="682.34" y2="263.37" gradientUnits="userSpaceOnUse">
+				      <stop offset="0" stop-color="#d25afc"/>
+				      <stop offset="1" stop-color="#2700bd"/>
+				    </linearGradient>
+				  </defs>
+				  <polygon points="1427.13 0 347.13 1080 1920 1080 1920 0 1427.13 0" style="fill: url(#angle-gradient)"/>
+				</svg>
+				<h2>ultraviolet</h2>
+			</div>
+			<div class='hp-ui'>
+				<div class='hp-picker bl'>
+					<div class='hp-colour button active' data-colour='ultraviolet'>
+						<div class='np' style='background:rgb(103, 53, 241)'></div>
+					</div>
+					<div class='hp-colour button' data-colour='hotpink'>
+						<div class='np' style='background:rgb(241, 53, 235)'></div>
+					</div>
+					<div class='hp-colour button' data-colour='solarflare'>
+						<div class='np' style='background:rgb(255, 235, 0)'></div>
+					</div>
+					<div class='hp-colour button' data-colour='midnight'>
+						<div class='np' style='background:rgb(15, 15, 15)'></div>
+					</div>
+					<p>choose a colour</p>
+				</div>
+			</div>
+		</div>
+
+		<div class='canvas-container ffs np'></div>
+
+		<div class='nav ffs fc' style='visibility: hidden;'>
+
+			<div class='bg-titles np'>
+				<p class='bg-title ns work'>Work</p>
+				<p class='bg-title ns articles'>Articles</p>
+				<p class='bg-title ns code'>Code</p>
+			</div>
+
+			<div class='nav-menu fc'>
+				<nav>
+					<div class='nav-item button ns work'>
+						<p class='title' rel='work'>Work</p>
+						<p class=index>01</p>
+						<svg class='nav-marker' viewBox="0 0 50 50"><path d="M14.15,33.85l11.31-16,11.3,16Z"/></svg>
+					</div>
+					<div class='nav-item button ns articles'>
+						<p class='title' rel='articles'>Articles</p>
+						<p class=index>02</p>
+						<svg class='nav-marker' viewBox="0 0 50 50"><path d="M14.15,33.85l11.31-16,11.3,16Z"/></svg>
+					</div>
+					<div class='nav-item button ns code'>
+						<p class='title' rel='code'>Code</p>
+						<p class=index>03</p>
+						<svg class='nav-marker' viewBox="0 0 50 50"><path d="M14.15,33.85l11.31-16,11.3,16Z"/></svg>
+					</div>
+				</nav>
+			</div>
+
+			<a href='mailto:gareth.battensby@gmail.com' class='contact button bl'>
+				<svg viewBox="0 0 58 50">
+				  <polygon points="0 -8 0 50 58 50 58 -8 58 -66 0 -8"/>
+				  <path d="M8.5,9.5v31h41V9.5Zm39,1L29,24.38,10.5,10.5Zm-38,29V11L29,25.63,48.5,11V39.5Z"/>
+				</svg>
+			</a>
+
+		</div>
+
+		<div class='load-container ffs fc ns np'>
+				<svg class='load-icon' viewBox="0 0 366 162">
+  <g class='load-title'>
+    <g style="fill: #fff; stroke: none">
+      <path d="M51.08,51.33c5.07,0,7.4,3.07,7.4,8.09V75.84c0,5-2.33,8-7.4,8H43.45V51.33Zm0,29.26c2.61,0,3.87-1.63,3.87-4.61V59.24c0-3-1.26-4.61-3.91-4.61H47.08v26Z"/>
+      <path d="M68.29,51.33V83.89H64.66V51.33Z"/>
+      <path d="M89.18,59.19V62H85.74V59c0-2.93-1.17-4.69-3.82-4.69S78.11,56.07,78.11,59V76.22c0,2.93,1.21,4.69,3.81,4.69s3.82-1.76,3.82-4.69V69.7H82.39V66.45h6.79V76c0,4.93-2.33,8.19-7.35,8.19S74.52,81,74.52,76V59.19c0-4.93,2.33-8.19,7.31-8.19S89.18,54.26,89.18,59.19Z"/>
+      <path d="M99,51.33V83.89H95.41V51.33Z"/>
+      <path d="M110.3,83.89V54.63h-6v-3.3h15.63v3.3h-6V83.89Z"/>
+      <path d="M127.13,77.33l-1.25,6.56h-3.35l6.23-32.56H134l6.23,32.56h-3.63l-1.25-6.56Zm.47-3.11h7.26l-3.68-18.8Z"/>
+      <path d="M145.88,83.89V51.33h3.63V80.59h9.3v3.3Z"/>
+      <path d="M182,51.33c5.07,0,7.39,3.07,7.39,8.09V75.84c0,5-2.32,8-7.39,8h-7.63V51.33Zm0,29.26c2.61,0,3.86-1.63,3.86-4.61V59.24c0-3-1.25-4.61-3.9-4.61H178v26Z"/>
+      <path d="M207.14,65.75V69h-7.95V80.59H209v3.3h-13.4V51.33H209v3.3h-9.77V65.75Z"/>
+      <path d="M229.19,59.14V60h-3.44V59c0-2.93-1.12-4.65-3.72-4.65s-3.72,1.72-3.72,4.6c0,7.3,10.93,8,10.93,17.17,0,4.93-2.37,8.14-7.35,8.14s-7.3-3.21-7.3-8.14V74.22H218v2c0,2.93,1.21,4.65,3.82,4.65s3.81-1.72,3.81-4.65c0-7.25-10.89-8-10.89-17.12,0-5,2.33-8.14,7.22-8.14S229.19,54.21,229.19,59.14Z"/>
+      <path d="M238.82,51.33V83.89h-3.63V51.33Z"/>
+      <path d="M259.71,59.19V62h-3.45V59c0-2.93-1.16-4.69-3.81-4.69s-3.81,1.76-3.81,4.69V76.22c0,2.93,1.2,4.69,3.81,4.69s3.81-1.76,3.81-4.69V69.7h-3.34V66.45h6.79V76c0,4.93-2.33,8.19-7.35,8.19S245.05,81,245.05,76V59.19c0-4.93,2.33-8.19,7.31-8.19S259.71,54.26,259.71,59.19Z"/>
+      <path d="M269.15,83.89h-3.26V51.33h4.61L278,74.87V51.33h3.21V83.89h-3.76l-8.33-26.33Z"/>
+      <path d="M299.34,65.75V69h-8V80.59h9.77v3.3H287.76V51.33h13.39v3.3h-9.77V65.75Z"/>
+      <path d="M314.55,51.33c5.12,0,7.26,2.6,7.26,7.44v2.65c0,3.59-1.26,5.82-4.05,6.7,3,.89,4.09,3.3,4.09,6.79V80a8.17,8.17,0,0,0,.65,3.9h-3.67a8.49,8.49,0,0,1-.61-4V74.82c0-3.67-1.72-4.84-4.74-4.84h-2.56V83.89h-3.63V51.33Zm-.93,15.35c2.88,0,4.6-.93,4.6-4.47V59.1c0-2.93-1.07-4.47-3.76-4.47h-3.54V66.68Z"/>
+    </g>
+    <g style="fill: #7c7c7c; stroke: none">
+      <path d="M107.21,30.33v1.48h-1.82V30.24c0-1.56-.62-2.49-2-2.49s-2,.93-2,2.49v9.11c0,1.55.64,2.49,2,2.49s2-.94,2-2.49V35.9h-1.77V34.18h3.59v5.07c0,2.61-1.23,4.33-3.89,4.33s-3.87-1.72-3.87-4.33V30.33c0-2.61,1.24-4.33,3.87-4.33S107.21,27.72,107.21,30.33Z"/>
+      <path d="M112.48,39.94l-.66,3.47H110l3.3-17.24h2.79l3.3,17.24h-1.92l-.67-3.47Zm.25-1.65h3.84l-1.95-9.95Z"/>
+      <path d="M126.3,26.17c2.71,0,3.84,1.38,3.84,3.94v1.41c0,1.89-.67,3.08-2.14,3.54,1.57.47,2.16,1.75,2.16,3.6v2.68a4.31,4.31,0,0,0,.35,2.07h-1.95a4.51,4.51,0,0,1-.32-2.09V38.61c0-2-.91-2.56-2.51-2.56h-1.35v7.36h-1.92V26.17Zm-.5,8.13c1.53,0,2.44-.49,2.44-2.36V30.29c0-1.56-.56-2.37-2-2.37h-1.87V34.3Z"/>
+      <path d="M139.82,33.81v1.72h-4.21v6.13h5.17v1.75h-7.09V26.17h7.09v1.75h-5.17v5.89Z"/>
+      <path d="M146.59,43.41V27.92h-3.18V26.17h8.28v1.75h-3.18V43.41Z"/>
+      <path d="M156.46,35.65v7.76h-1.92V26.17h1.92v7.76h4.24V26.17h1.92V43.41H160.7V35.65Z"/>
+      <path d="M175.33,26.17c2.68,0,3.74,1.28,3.74,3.82v.81c0,1.82-.52,3-2,3.43,1.68.46,2.32,1.79,2.32,3.69v1.45c0,2.59-1.26,4-3.94,4h-4V26.17Zm-.47,7.32c1.53,0,2.31-.5,2.31-2.29v-1c0-1.53-.51-2.27-1.89-2.27h-1.9v5.57Zm.57,8.17c1.4,0,2-.74,2-2.34V37.8c0-1.92-.76-2.56-2.41-2.56h-1.68v6.42Z"/>
+      <path d="M184.59,39.94l-.67,3.47h-1.77l3.3-17.24h2.78l3.3,17.24h-1.92L189,39.94Zm.24-1.65h3.85l-2-9.95Z"/>
+      <path d="M197.07,43.41V27.92H193.9V26.17h8.27v1.75H199V43.41Z"/>
+      <path d="M207.54,43.41V27.92h-3.18V26.17h8.28v1.75h-3.18V43.41Z"/>
+      <path d="M221.63,33.81v1.72h-4.22v6.13h5.18v1.75h-7.1V26.17h7.1v1.75h-5.18v5.89Z"/>
+      <path d="M227.59,43.41h-1.73V26.17h2.44l4,12.46V26.17H234V43.41h-2l-4.4-13.94Z"/>
+      <path d="M245,30.31v.47h-1.83v-.57c0-1.55-.59-2.46-2-2.46s-2,.91-2,2.44c0,3.86,5.79,4.23,5.79,9.08,0,2.62-1.25,4.31-3.89,4.31s-3.87-1.69-3.87-4.31v-1H239v1.08c0,1.55.64,2.47,2,2.47s2-.92,2-2.47c0-3.84-5.76-4.21-5.76-9.06,0-2.66,1.23-4.31,3.82-4.31S245,27.7,245,30.31Z"/>
+      <path d="M252,26.17c2.68,0,3.74,1.28,3.74,3.82v.81c0,1.82-.51,3-2,3.43,1.68.46,2.32,1.79,2.32,3.69v1.45c0,2.59-1.26,4-3.94,4h-4V26.17Zm-.47,7.32c1.53,0,2.32-.5,2.32-2.29v-1c0-1.53-.52-2.27-1.9-2.27h-1.9v5.57Zm.57,8.17c1.4,0,2-.74,2-2.34V37.8c0-1.92-.76-2.56-2.41-2.56h-1.68v6.42Z"/>
+      <path d="M262,37.23l-3.65-11.06h2l2.68,8.47,2.71-8.47h1.82l-3.67,11.06v6.18H262Z"/>
+    </g>
+  </g>
+  <g class='load-bar'>
+    <path class='back' d="M114.77,134l15.59-15.6L146,134l16-15.6L177.92,134l15.56-15.6L209.05,134l16.06-15.6L240.7,134" style="fill: none;stroke: #fff;"/>
+    <path class='front' d="M114.77,134l15.59-15.6L146,134l16-15.6L177.92,134l15.56-15.6L209.05,134l16.06-15.6L240.7,134" style="fill: none;stroke: #fff;"/>
+  </g>
+</svg>
+		</div>
+
+		<div class='intro ffs fc' style='visibility: hidden'>
+			<svg class='intro-draw' viewBox="0 0 478 478">
+			  <path d="M237.67,237.41c-67,1.23-146.85,11.33-188.12-36A117.33,117.33,0,0,1,60.81,36.06C109.53-6.45,180.48,1.62,226.18,47.32c84.25,84.25-59.61,300.11,21.64,381.36h0A117.21,117.21,0,0,0,424.45,274.57c-41.73-47.83-120.86-38.37-186.78-37.16"/>
+			</svg>
+			<p class='np ns'>Let's dr<span>a</span>w!</p>
+		</div>
+
+		<div class='nav-button button dark'>
+			<svg class='ns np' viewBox="0 0 70 140">
+			  <rect class='fill' y="-50" width="70" height="190"/>
+			  <polygon class='mask' points="72 -50 72 141 -2 215 -2 141 -2 -50 72 -50"/>
+			  <polygon class='arrow' points="35 118.54 43.46 102.5 26.54 102.5 35 118.54"/>
+			</svg>
+		</div>
+
+	</main>
+
+	<script src='js/SplitText.js'></script>
+	<script src='js/CustomEase.js'></script>
+	<script src='js/TweenMax.min.js'></script>
+	<script src='js/app.js'></script>
+
+</body>
+</html>
