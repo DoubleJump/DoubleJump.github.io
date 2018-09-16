@@ -623,4 +623,24 @@ nav
   {
     display: none;
   }
+
+  .intro p
+  {
+    font-size: 3.8rem;
+  }
+
+  .nav-item:hover .title:before
+  {
+    transform: translateY(0%);
+  }
+  .nav-item:hover .title:after
+  {
+    transform: translateY(100%);
+  }
+
+  .nav-item:hover .index
+{
+  transform: translateY(0px);
+  color: black;
+}
 }
