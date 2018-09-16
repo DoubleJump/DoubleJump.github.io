@@ -890,7 +890,9 @@ function Touch()
 function GamePad()
 {var g={};return g;}
 var input;function Input(root)
-{var r={};r.mouse=Mouse();r.keys=new Uint8Array(256);r.touches=[];r.gyro=Gyro();r.is_touch_device=is_touch_device();r.scrolled=false;if(!root)root=window;r.MAX_TOUCHES=5;for(var i=0;i<r.MAX_TOUCHES;++i)r.touches[i]=Touch();root.addEventListener("touchstart",on_touch_start,false);root.addEventListener("touchmove",on_touch_move,false);root.addEventListener("touchend",on_touch_end,false);window.addEventListener('devicemotion',on_device_motion);window.addEventListener('deviceorientation',on_device_rotation);window.addEventListener('keydown',on_key_down);window.addEventListener('keyup',on_key_up);window.addEventListener('mouseup',on_key_up);window.addEventListener('mousedown',on_key_down);window.addEventListener('mousemove',on_mouse_move);window.addEventListener('wheel',on_mouse_wheel);window.addEventListener('scroll',on_scroll);input=r;return r;}
+{var r={};r.mouse=Mouse();r.keys=new Uint8Array(256);r.touches=[];r.gyro=Gyro();r.is_touch_device=is_touch_device();r.scrolled=false;if(!root)root=window;r.MAX_TOUCHES=5;for(var i=0;i<r.MAX_TOUCHES;++i)r.touches[i]=Touch();window.addEventListener("touchstart",on_touch_start,false);window.addEventListener("touchmove",on_touch_move,false);window.addEventListener("touchend",on_touch_end,false);window.addEventListener('devicemotion',on_device_motion);window.addEventListener('deviceorientation',on_device_rotation);window.addEventListener('keydown',on_key_down);window.addEventListener('keyup',on_key_up);window.addEventListener('mouseup',on_key_up);window.addEventListener('mousedown',on_key_down);window.addEventListener('mousemove',on_mouse_move);window.addEventListener('wheel',on_mouse_wheel);window.addEventListener('scroll',on_scroll);input=r;return r;}
+function press()
+{return key_down(Keys.MOUSE_LEFT)||input.touches[0].is_touching===true;}
 function is_touch_device()
 {return(('ontouchstart'in window)||(navigator.MaxTouchPoints>0)||(navigator.msMaxTouchPoints>0));}
 function update_input(dt)
@@ -934,7 +936,8 @@ function on_device_motion(e)
 function on_device_rotation(e)
 {quat_set_euler_f(input.gyro.rotation,e.beta,e.gamma,e.alpha);set_vec3(input.gyro.euler,e.beta,e.gamma,e.alpha);input.gyro.updated=true;}
 function on_touch_start(e)
-{var n=e.changedTouches.length;for(var i=0;i<n;++i)
+{LOG('t')
+input.keys[Keys.MOUSE_LEFT]=KeyState.DOWN;var n=e.changedTouches.length;for(var i=0;i<n;++i)
 {var it=e.changedTouches[i];for(var j=0;j<input.MAX_TOUCHES;++j)
 {var t=input.touches[j];if(t.is_touching===true)continue;var x=it.clientX;var y=it.clientY;set_vec3(t.position,x,y,0);set_vec3(t.last_position,x,y,0);set_vec3(t.delta,0,0,0);t.is_touching=true;t.id=it.identifier;t.updated=true;break;}}
 }
@@ -945,7 +948,7 @@ function on_touch_move(e)
 {t.is_touching=true;var x=it.clientX;var y=it.clientY;set_vec3(t.position,x,y,0);t.updated=true;break;}}}
 e.preventDefault();}
 function on_touch_end(e)
-{var n=e.changedTouches.length;for(var i=0;i<n;++i)
+{input.keys[Keys.MOUSE_LEFT]=KeyState.UP;var n=e.changedTouches.length;for(var i=0;i<n;++i)
 {var id=e.changedTouches[i].identifier;for(var j=0;j<input.MAX_TOUCHES;++j)
 {var t=input.touches[j];if(id===t.id)
 {t.is_touching=false;t.id=-1;t.updated=true;break;}}}
@@ -1153,19 +1156,19 @@ else
 var State={INIT:-1,LOADING:0,ENTER:1,RUNNING:2,EXIT:3,HIDDEN:4,};var AppState={DEBUG:-1,LOADING:0,INTRO:1,FLOW:2,BLUE_MARBLE:3,HEADPHONES:4,WORK:5,CODE:6,ARTICLES:7,NAV:8,};function init()
 {LOG('init')
 app.assets=AssetGroup('common');load_assets(app.assets,['assets/common.txt',],function()
-{bind_assets(app.assets);});app.anims={};app.overlay=Overlay();app.ui=UI();app.menu=NavMenu();app.load_screen=LoadScreen();app.flow=Flow(1024);app.work=null;app.blue_marble=null;app.headphones=null
+{bind_assets(app.assets);});app.anims={};app.overlay=Overlay();app.ui=UI();app.menu=NavMenu();app.load_screen=LoadScreen();if(app.view[3]>app.view[2])app.flow=Flow2();else app.flow=Flow(1024);app.work=null;app.blue_marble=null;app.headphones=null
 app.gl_draw=GL_Draw(12000);app.screen_quad=quad_mesh(2,2,0);app.quad=quad_mesh(1,1,0);app.intro_complete=false;app.has_drawn=false;set_clear_color([0,0,0,0]);clear_screen();app.state=AppState.LOADING;set_viewport(app.view);clear_stacks();requestAnimationFrame(update);}
 function update(t)
 {set_time(app.time,t);requestAnimationFrame(update);if(app.needs_resize)
 {resize_canvas(app.canvas,app.container);app.view[2]=app.canvas.width;app.view[3]=app.canvas.height;ui_resize(app.ui);}
-if(app.time.paused===true||app.has_focus===false||app.assets.loaded===false)
+if(app.assets.loaded===false)
 {return;}
 var dt=app.time.dt;switch(app.state)
 {case AppState.DEBUG:if(key_down(Keys.P))
 {if(app.load_screen.open)hide_load_screen(app.load_screen);else show_load_screen(app.load_screen);}
 break;case AppState.LOADING:if(app.assets.loaded&&app.flow.assets.loaded&&app.time.elapsed>1.0)
 {hide_load_screen(app.load_screen);app.state=AppState.INTRO;app.flow.state=State.RUNNING;show(app.ui.items.intro);app.anims.intro_enter.restart();}
-break;case AppState.INTRO:if(key_down(Keys.MOUSE_LEFT)&&app.has_drawn===false)
+break;case AppState.INTRO:if(press()&&app.has_drawn===false)
 {LOG('Intro out')
 app.has_drawn=true;app.ui.items.nav_button.classList.add('active');app.menu.available=true;app.anims.intro_exit.restart();app.state=AppState.FLOW;update_flow(app.flow,dt);}
 break;case AppState.WORK:update_work(app.work,dt);break;case AppState.FLOW:update_flow(app.flow,dt);break;case AppState.BLUE_MARBLE:update_blue_marble(app.blue_marble,dt);break;case AppState.HEADPHONES:update_heaphones(app.headphones,dt);break;case AppState.ARTICLES:break;case AppState.CODE:break;}
@@ -1291,11 +1294,16 @@ if(r.state===State.ENTER)
 {r.state=State.RUNNING;}
 if(r.state===State.RUNNING)
 {if(app.menu.covered===false)
-render_flow(r);}}
+{if(app.view[3]>app.view[2])render_flow2(r);else render_flow(r);}}}
 function render_flow(r)
 {var meshes=r.assets.meshes;var textures=r.assets.textures;var shaders=r.assets.shaders;var mp=input.mouse.position;var mouse=_Vec3();mouse[0]=mp[0]/app.view[2];mouse[1]=mp[1]/app.view[3];mouse[0]=mouse[0]*2.0-1.0;mouse[1]=mouse[1]*2.0-1.0;var md=input.mouse.delta;var delta=_Vec3();delta[0]=(md[0]/app.view[2])+1.0*0.5;delta[1]=(md[1]/app.view[3])+1.0*0.5;var vel=vec_length(input.mouse.delta)/app.view[2];r.cursor_velocity=lerp(r.cursor_velocity,vel,0.9*app.time.dt);set_viewport(app.view);disable_depth_testing();disable_stencil_testing();if(key_held(Keys.MOUSE_LEFT))
 {enable_alpha_blending();set_blend_mode(BlendMode.DEFAULT);set_render_target(r.flow_target);set_shader(shaders.velocity);set_uniform('mouse',mouse);set_uniform('velocity',delta);set_uniform('hardness',r.hardness);set_uniform('radius',r.cursor_velocity);draw_mesh(r.quad);disable_alpha_blending();}
 set_render_target(r.particle_target);set_render_target_color(r.screen_texture);set_viewport(app.view);set_shader(shaders.screen_particles);set_uniform('screen',r.background_texture);set_uniform('opacity',r.fade_opacity);draw_mesh(r.screen_quad);enable_alpha_blending();set_blend_mode(BlendMode.OVERLAY);set_shader(shaders.draw_particles);set_uniform('res',r.particle_res);set_uniform('particles',r.particle_state_tex_A);set_uniform('flow_field',r.flow_field);set_uniform('flow_speed',13.0);set_uniform('offset',(app.time.elapsed*0.3)%100.0);draw_mesh(r.particle_mesh);set_render_target(null);set_viewport(app.view);enable_alpha_blending();set_shader(shaders.screen_particles);set_uniform('screen',r.screen_texture);set_uniform('opacity',1.0);draw_mesh(r.screen_quad);var tmp=r.background_texture;r.background_texture=r.screen_texture;r.screen_texture=tmp;disable_alpha_blending();set_render_target(r.particle_target);set_render_target_color(r.particle_state_tex_A);set_viewport(_Vec4(0,0,r.particle_res,r.particle_res));set_shader(shaders.update_particles);set_uniform('particles',r.particle_state_tex_B);set_uniform('flow_field',r.flow_field);set_uniform('res',r.particle_res);set_uniform('rand_seed',Math.random());set_uniform('flow_speed',r.flow_speed);set_uniform('drop_rate',r.drop_rate);set_uniform('drop_rate_bump',r.drop_rate_bump);draw_mesh(r.screen_quad);var tmp2=r.particle_state_tex_B;r.particle_state_tex_B=r.particle_state_tex_A;r.particle_state_tex_A=tmp2;}
+function Flow2()
+{var r={};r.state=State.INIT;r.assets=AssetGroup('flow');r.screen_quad=quad_mesh(2,2,0);r.quad=quad_mesh(1,1,0);load_assets(r.assets,['assets/flow2.txt',],function()
+{bind_assets(r.assets);});return r;}
+function render_flow2(r)
+{var meshes=r.assets.meshes;var textures=r.assets.textures;var shaders=r.assets.shaders;set_render_target(null);set_viewport(app.view);set_blend_mode(BlendMode.DEFAULT);set_clear_color_f(0,0,0,1);clear_screen();set_shader(shaders.flowy);set_uniform('t',app.time.elapsed);var p=app.input.mouse.position;set_uniform('mouse',_Vec3(p[0]/app.view[2]),p[1]/app.view[3]);set_uniform('res',_Vec3(app.view[2],app.view[3]));draw_mesh(r.screen_quad);}
 function BlueMarble()
 {var r={};r.state=State.INIT;r.assets=AssetGroup('marble');r.timer=0;r.overlay=1.0;r.density=-2.906;r.brightness=1.09;r.root=Entity(0,0,0,null);r.earth=Entity(0,0,0,r.root);r.camera=Camera(0.01,500,60,app.view);set_vec3(r.camera.position,0,0,30);r.sphere=sphere_mesh(10.0,64,64);r.spin_velocity=0.15;r.spin=Vec3(0,0,15);return r;}
 function reset_blue_marble(bm)
